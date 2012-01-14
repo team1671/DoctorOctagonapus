@@ -1,3 +1,5 @@
+//add encoders cam and rail
+
 #include "WPILib.h"
 
 #define IO (DriverStation::GetInstance()->GetEnhancedIO())
@@ -6,7 +8,8 @@ class Init : public SimpleRobot
 {
 	//declarations
 	Joystick pilot, copilot;
-	Jaguar lefty, righty, intake, lift, raiseA;/* , yaw, pitch //(if mobile top)*/;
+	Jaguar lefty, righty, intake, lift, raiseA, yaw, pitch /*(if mobile top)*/;
+	bool raiseB;
 	
 public:
 	Init(void):
@@ -16,7 +19,9 @@ public:
 		righty(2),
 		intake(3),
 		lift(4),
-		raiseA(5)
+		raiseA(5),
+		yaw(6),
+		pitch(7)
 		{
 		}
 	
@@ -27,41 +32,79 @@ public:
 	void OperatorControl(void)
 	{
 		GetWatchdog().Kill();
-		
+		raiseB=1;
 		while (IsOperatorControl())
 		{
+			if (copilot.GetRawButton(1))
+				raiseB = 1;
+			else if (copilot.GetRawButton(2))
+				raiseB = 0;
 			
-			if (copilot.GetTop())//trigger top left - top tower
+			if (raiseB)//for tower controll
 			{
-				raiseA.Set(1);
+				if (copilot.GetTop())//trigger top left - top tower
+				{
+					raiseA.Set(1);
+				}
+				else if (copilot.GetTrigger())//lower tower top tower
+				{
+					raiseA.Set(-1);
+				}
+				else {raiseA.Set(0);}
 			}
-			else if (copilot.GetTrigger())
+			else//for top override
 			{
-				raiseA.Set(-1);
+				if (copilot.GetTop())
+				{
+					yaw.Set(-.3);
+				}
+				else if (copilot.GetTrigger())//lower tower top tower
+				{
+					yaw.Set(.3);
+				}
+				else
+				{
+					yaw.Set(0);
+				}
 				
+				if (copilot.GetRawButton(3))
+				{
+					pitch.Set(.3);
+				}
+				else if (copilot.GetRawButton(4))
+				{
+					pitch.Set(-.3);
+				}
+				else
+				{
+					pitch.Set(0);
+				}
 			}
-			else {raiseA.Set(0);}
 			
 			intake.Set(copilot.GetTwist());
-			lift.Set(copilot.GetY());//lift tower2
+			lift.Set(copilot.GetY());//raise ball (act on 2 jags)
+			
+			//Drive
+			if (pilot.GetY() + 2 * pilot.GetX() > -1 && pilot.GetY() + 2 * pilot.GetX() < 1)
+			{
+				lefty.Set(pilot.GetY() + 2 * pilot.GetX());//left thumb?
+			}
+			else if ( pilot.GetY() + 2 * pilot.GetX() >= 1)
+			{
+				lefty.Set(1);
+			}
+			else {lefty.Set(-1);}
+			if (pilot.GetY() - 2 * pilot.GetX() > -1 && pilot.GetY() - 2 * pilot.GetX() < 1)
+			{
+				righty.Set(pilot.GetY() - 2 * pilot.GetX());//twist is w/z
+			}
+			else if ( pilot.GetY() - 2 * pilot.GetX() >= 1)
+			{
+				lefty.Set(1);
+			}
+			else {righty.Set(-1);}
 			
 			
-			/*idea bellow:lefty left wheels et all
-		if y and twist return pitch and x and z return roll thumb->left & forward 
-		increases one jag(by over hence the else) and decreases another to negatives:
-		turns
-		from left forward to back left, begins to do opposite
-		*/
-			if (pilot.GetY() - 2 * pilot.GetX() < 1)
-			{
-				lefty.Set(pilot.GetY() - 2 * pilot.GetX());//left thumb?
-			}
-			else {lefty.Set(1);}
-			if (pilot.GetY() - 2 * pilot.GetX() < 1)
-			{
-				righty.Set(pilot.GetY() + 2 * pilot.GetX());//twist is w/z
-			}
-			else {righty.Set(1);}
 				
 			Wait(0.005);				// wait for a motor update time
 		}

@@ -4,9 +4,9 @@
 
 class Init : public SimpleRobot
 {
-  //declarations
+	//declarations
 	Joystick pilot, copilot;
-	Jaguar lefty, righty, intake, lift, raiseA, raiseB;/* , yaw, pitch //(if mobile top)*/;
+	Jaguar lefty, righty, intake, lift, raiseA;/* , yaw, pitch //(if mobile top)*/;
 	
 public:
 	Init(void):
@@ -16,8 +16,7 @@ public:
 		righty(2),
 		intake(3),
 		lift(4),
-		raiseA(5),
-		raiseB(6)
+		raiseA(5)
 		{
 		}
 	
@@ -36,13 +35,12 @@ public:
 			{
 				raiseA.Set(1);
 			}
-			else {raiseA.Set(0);}
-			if (copilot.GetTrigger())
+			else if (copilot.GetTrigger())
 			{
-				raiseB.Set(1);
+				raiseA.Set(-1);
 				
 			}
-			else {raiseB.Set(0);}
+			else {raiseA.Set(0);}
 			
 			intake.Set(copilot.GetTwist());
 			lift.Set(copilot.GetY());//lift tower2

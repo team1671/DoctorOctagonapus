@@ -9,7 +9,7 @@ class Init : public SimpleRobot
 	//declarations -- extra jag and gyro for balance?
 	Encoder /*leftyEnc, rightyEnc,*/ yawEnc, pitchEnc, LTopEnc, LBotEnc;
 	Joystick pilot, copilot;
-	Jaguar lefty, righty, intake, lift, raiseTower, yaw, pitch, LTop, LBot /*(if mobile top)*/;
+	Jaguar lefty, righty, leftyB, rightyB, intake, lift, raiseTower, yaw, pitch, LTop, LBot;
 	bool raiseB;
 	short int negate;
 	
@@ -19,6 +19,8 @@ public:
 		copilot(2),
 		lefty(1),
 		righty(2),
+		leftyB(10),
+		rightyB(11),//not possible with 1 sidecar but bc/can drive, will not use sidecar
 		intake(3),
 		lift(4),
 		raiseTower(5),
@@ -121,21 +123,34 @@ public:
 			if (pilot.GetY() + 2 * pilot.GetX() > -1 && pilot.GetY() + 2 * pilot.GetX() < 1)
 			{
 				lefty.Set((pilot.GetY() + 2 * pilot.GetX()) *negate);//left thumb?
+				leftyB.Set((pilot.GetY() + 2 * pilot.GetX()) *negate);//left thumb?
 			}
 			else if ( pilot.GetY() + 2 * pilot.GetX() >= 1)
 			{
 				lefty.Set(1*negate);
+				leftyB.Set(1*negate);
 			}
-			else {lefty.Set(-1*negate);}
+			else 
+			{
+				lefty.Set(-1*negate);
+				leftyB.Set(-1*negate);
+			}
+			
 			if (pilot.GetY() - 2 * pilot.GetX() > -1 && pilot.GetY() - 2 * pilot.GetX() < 1)
 			{
 				righty.Set((pilot.GetY() - 2 * pilot.GetX()) *negate);//twist is w/z
+				rightyB.Set((pilot.GetY() - 2 * pilot.GetX()) *negate);//twist is w/z
 			}
 			else if ( pilot.GetY() - 2 * pilot.GetX() >= 1)
 			{
-				lefty.Set(1*negate);
+				righty.Set(1*negate);
+				rightyB.Set(1*negate);
 			}
-			else {righty.Set(-1*negate);}
+			else 
+			{
+				righty.Set(-1*negate);
+				rightyB.Set(-1*negate);
+			}
 			
 			
 				

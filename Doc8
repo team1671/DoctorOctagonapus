@@ -9,7 +9,7 @@ class Init : public SimpleRobot
 	//declarations -- extra jag and gyro for balance?
 	Encoder /*leftyEnc, rightyEnc,*/ yawEnc, pitchEnc, LTopEnc, LBotEnc;
 	Joystick pilot, copilot;
-	Jaguar lefty, righty, intake, lift, raiseA, yaw, pitch, LTop, LBot /*(if mobile top)*/;
+	Jaguar lefty, righty, intake, lift, raiseTower, yaw, pitch, LTop, LBot /*(if mobile top)*/;
 	bool raiseB;
 	
 public:
@@ -20,7 +20,7 @@ public:
 		righty(2),
 		intake(3),
 		lift(4),
-		raiseA(5),
+		raiseTower(5),
 		yaw(6),
 		pitch(7),
 		LTop(8),
@@ -53,25 +53,26 @@ public:
 			{
 				if (copilot.GetTop())//trigger top left - top tower
 				{
-					raiseA.Set(1);
+					raiseTower.Set(1);
 				}
 				else if (copilot.GetTrigger())//lower tower top tower
 				{
-					raiseA.Set(-1);
+					raiseTower.Set(-1);
 				}
-				else {raiseA.Set(0);}
+				else {raiseTower.Set(0);}
 				
 				//put auton top here
 				/*
 				 * For Use:
-					yaw(6),
-					pitch(7),
-					LTop(8),
-					LBot(9),
-					LTopEnc(5,6),
-					LBotEnc(5,6),
-					yawEnc(7,8),
-					pitchEnc(9,10)
+					yaw
+					pitch
+					LTop
+					LBot
+					LTopEnc
+					LBotEnc
+					yawEnc
+					pitchEnc
+					lift
 				 */
 				
 				
@@ -80,6 +81,10 @@ public:
 			}
 			else//for top override
 			{
+
+				lift.Set(copilot.GetY());//raise ball (act on 2 jags)
+				LTop.Set(1);
+				LBot.Set(-1);
 				if (copilot.GetTop())
 				{
 					yaw.Set(-.3);
@@ -108,7 +113,6 @@ public:
 			}
 			
 			intake.Set(copilot.GetTwist());
-			lift.Set(copilot.GetY());//raise ball (act on 2 jags)
 			
 			//Drive
 			if (pilot.GetY() + 2 * pilot.GetX() > -1 && pilot.GetY() + 2 * pilot.GetX() < 1)

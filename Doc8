@@ -11,6 +11,7 @@ class Init : public SimpleRobot
 	Joystick pilot, copilot;
 	Jaguar lefty, righty, intake, lift, raiseTower, yaw, pitch, LTop, LBot /*(if mobile top)*/;
 	bool raiseB;
+	short int negate;
 	
 public:
 	Init(void):
@@ -42,6 +43,7 @@ public:
 	{
 		GetWatchdog().Kill();
 		raiseB=1;
+		negate=1;
 		while (IsOperatorControl())
 		{
 			if (copilot.GetRawButton(1))
@@ -115,24 +117,25 @@ public:
 			intake.Set(copilot.GetTwist());
 			
 			//Drive
+			if (pilot.GetRawButton(1)){negate *= -1;}
 			if (pilot.GetY() + 2 * pilot.GetX() > -1 && pilot.GetY() + 2 * pilot.GetX() < 1)
 			{
-				lefty.Set(pilot.GetY() + 2 * pilot.GetX());//left thumb?
+				lefty.Set((pilot.GetY() + 2 * pilot.GetX()) *negate);//left thumb?
 			}
 			else if ( pilot.GetY() + 2 * pilot.GetX() >= 1)
 			{
-				lefty.Set(1);
+				lefty.Set(1*negate);
 			}
-			else {lefty.Set(-1);}
+			else {lefty.Set(-1*negate);}
 			if (pilot.GetY() - 2 * pilot.GetX() > -1 && pilot.GetY() - 2 * pilot.GetX() < 1)
 			{
-				righty.Set(pilot.GetY() - 2 * pilot.GetX());//twist is w/z
+				righty.Set((pilot.GetY() - 2 * pilot.GetX()) *negate);//twist is w/z
 			}
 			else if ( pilot.GetY() - 2 * pilot.GetX() >= 1)
 			{
-				lefty.Set(1);
+				lefty.Set(1*negate);
 			}
-			else {righty.Set(-1);}
+			else {righty.Set(-1*negate);}
 			
 			
 				

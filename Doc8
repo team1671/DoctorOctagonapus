@@ -1,4 +1,4 @@
-//add encoders cam and rail
+//cam and rail
 
 #include "WPILib.h"
 
@@ -6,9 +6,10 @@
 
 class Init : public SimpleRobot
 {
-	//declarations
+	//declarations -- extra jag and gyro for balance?
+	Encoder /*leftyEnc, rightyEnc,*/ yawEnc, pitchEnc, LTopEnc, LBotEnc;
 	Joystick pilot, copilot;
-	Jaguar lefty, righty, intake, lift, raiseA, yaw, pitch /*(if mobile top)*/;
+	Jaguar lefty, righty, intake, lift, raiseA, yaw, pitch, LTop, LBot /*(if mobile top)*/;
 	bool raiseB;
 	
 public:
@@ -21,7 +22,15 @@ public:
 		lift(4),
 		raiseA(5),
 		yaw(6),
-		pitch(7)
+		pitch(7),
+		LTop(8),
+		LBot(9),
+		//leftyEnc(1,2),
+		//rightyEnc(3,4),
+		LTopEnc(5,6),
+		LBotEnc(5,6),
+		yawEnc(7,8),
+		pitchEnc(9,10)
 		{
 		}
 	
@@ -51,6 +60,23 @@ public:
 					raiseA.Set(-1);
 				}
 				else {raiseA.Set(0);}
+				
+				//put auton top here
+				/*
+				 * For Use:
+					yaw(6),
+					pitch(7),
+					LTop(8),
+					LBot(9),
+					LTopEnc(5,6),
+					LBotEnc(5,6),
+					yawEnc(7,8),
+					pitchEnc(9,10)
+				 */
+				
+				
+				
+				
 			}
 			else//for top override
 			{

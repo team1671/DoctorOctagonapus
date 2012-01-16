@@ -2,19 +2,22 @@
 
 #include "WPILib.h"
 
+
+
 #define IO (DriverStation::GetInstance()->GetEnhancedIO())
 
-class Init : public SimpleRobot
+
+class SunGlasses : public SimpleRobot
 {
 	//declarations -- extra jag and gyro for balance?
 	Encoder /*leftyEnc, rightyEnc,*/ yawEnc, pitchEnc, LTopEnc, LBotEnc;
 	Joystick pilot, copilot;
-	Jaguar lefty, righty, leftyB, rightyB, intake, lift, raiseTower, yaw, pitch, LTop, LBot;
+	CANJaguar lefty, righty, leftyB, rightyB, intake, lift, raiseTower, yaw, pitch, LTop, LBot;
 	bool raiseB;
 	short int negate;
 	
 public:
-	Init(void):
+	SunGlasses(void):
 		pilot(1),
 		copilot(2),
 		lefty(1),
@@ -40,6 +43,19 @@ public:
 	void Autonomous(void)
 	{
 		GetWatchdog().Kill();
+		lefty.ChangeControlMode(CANJaguar::kPercentVbus);
+		righty.ChangeControlMode(CANJaguar::kPercentVbus);
+		leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
+		rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
+		intake.ChangeControlMode(CANJaguar::kPercentVbus);
+		lift.ChangeControlMode(CANJaguar::kPercentVbus);
+		raiseTower.ChangeControlMode(CANJaguar::kPercentVbus);
+		yaw.ChangeControlMode(CANJaguar::kPercentVbus);
+		pitch.ChangeControlMode(CANJaguar::kPercentVbus);
+		LTop.ChangeControlMode(CANJaguar::kPercentVbus);
+		LBot.ChangeControlMode(CANJaguar::kPercentVbus);
+		
+		
 	}
 	void OperatorControl(void)
 	{
@@ -159,5 +175,5 @@ public:
 	}
 };
 
-START_ROBOT_CLASS(Init);
+START_ROBOT_CLASS(SunGlasses);
 

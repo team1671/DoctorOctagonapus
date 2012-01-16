@@ -1,4 +1,5 @@
 //cam and rail to be added
+//Note: drive is car drive
 #include "WPILib.h"
 
 
@@ -6,7 +7,7 @@
 #define IO (DriverStation::GetInstance()->GetEnhancedIO())
 
 
-class SunGlasses : public SimpleRobot
+class SunGlassesAndTentacles : public SimpleRobot
 {
 	//declarations -- extra jag and gyro for balance?
 	Encoder yawEnc, /*pitchEnc,*/ LTopEnc, LBotEnc;
@@ -17,7 +18,7 @@ class SunGlasses : public SimpleRobot
 	double target;
 	
 public:
-	SunGlasses(void):
+	SunGlassesAndTentacles(void):
 		pilot(1),
 		copilot(2),
 		lefty(1),
@@ -56,13 +57,81 @@ public:
 			yawEnc.Start();//will have to for other encoders too
 		}
 	
+	void DOGP(void)
+	{
+		/* For Use:
+		pitch??
+		pitchEnc??
+		 */
+			if (yawEnc.Get() == 1440 || yawEnc.Get() == -1440)
+				yawEnc.Reset();
+			if (yawEnc.Get() > target + 10)//DESPERATE NEED OF PID -- use canjags awesomeness
+				yaw.Set(-1);				//20 ping range temp solution XD
+			else if (yawEnc.Get() < target - 10)
+				yaw.Set(1);
+			else
+				yaw.Set(0);
+		//here set top and bot to speeds using algorithim and distance
+	}
+	
+	void fireMuhLazer(void)
+	{
+		DOGP();
+		/*For Use:
+		LTop
+		LBot
+		LTopEnc
+		LBotEnc
+		lift
+		*/
+		
+	}
+	
+	void drive(void)
+	{				
+		if (pilot.GetY() > 0 && pilot.GetX() >= 0)//forward right
+		{
+			lefty.Set(pilot.GetY() * negate);//left motors full
+			leftyB.Set(pilot.GetY() * negate);//left motors full
+			righty.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate);//right motors full dec by twiceX abs X
+			rightyB.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate);
+		}//(so up to x = 0 right rev and when y negative, backward curve)
+		else if (pilot.GetY() < 0 && pilot.GetX() > 0)//backward left
+		{
+			righty.Set(pilot.GetY() * negate * -1);
+			rightyB.Set(pilot.GetY() * negate * -1);
+			lefty.Set((pilot.GetY() - pilot.GetX() * 2) * negate);
+			leftyB.Set((pilot.GetY() - pilot.GetX() * 2) * negate);
+		}
+		else if (pilot.GetY() > 0 && pilot.GetX() <= 0)//forward left
+		{
+			righty.Set(pilot.GetY() * negate);
+			rightyB.Set(pilot.GetY() * negate);
+			lefty.Set((pilot.GetX() * 2 + pilot.GetY()) * negate);
+			leftyB.Set((pilot.GetX() * 2 + pilot.GetY()) * negate);
+		}
+		else if (pilot.GetY() < 0 && pilot.GetX() < 0)//back right
+		{
+			lefty.Set(pilot.GetY() * negate * -1);//left full back
+			leftyB.Set(pilot.GetY() * negate * -1);//left full back
+			righty.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate);//right morots full dec by twice abs X
+			rightyB.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate);
+		}
+		else
+		{
+			righty.Set(pilot.GetY() *negate);
+			rightyB.Set(pilot.GetY() *negate);
+			lefty.Set(pilot.GetY() *negate);
+			leftyB.Set(pilot.GetY() *negate);
+		}
+	}
+	
 	void Autonomous(void)
 	{
 		GetWatchdog().Kill();
 		while (IsAutonomous())
 		{
-			//use shooting class later && raise lift
-
+			fireMuhLazer();
 			Wait(0.005);				// wait for a motor update time
 		}
 		//yawEnc.Stop();
@@ -89,35 +158,7 @@ public:
 				}
 				else {raiseTower.Set(0);}
 				
-				//put auton top here
-				/*
-				 * For Use:
-					yaw
-					pitch??
-					LTop
-					LBot
-					LTopEnc
-					LBotEnc
-					yawEnc
-					pitchEnc??
-					lift
-				 */
-/*later make this a class for use in auton also
-  				if (yawEnc.Get() == 1440 || yawEnc.Get() == -1440)
-					yawEnc.Reset();
-					
-				if (yawEnc.Get() > target + 10)//DESPERATE NEED OF PID -- use canjags awesomeness
-					yaw.Set(-1);//20 ping range temp solution XD
-				else if (yawEnc.Get() < target - 10)
-					yaw.Set(1);
-				else
-					yaw.Set(0);
-				
-				here set top and bot to speeds using algorithim and distance
-*/				
-				
-				
-				
+				fireMuhLazer();
 				
 			}
 			else//for top override
@@ -155,48 +196,9 @@ public:
 			
 			intake.Set(copilot.GetTwist());
 			
-			
-			
-			//			DRIVE AND PILOT
+
 			if (pilot.GetRawButton(1)){negate *= -1;}//to reverse drive
-			
-			if (pilot.GetY() > 0 && pilot.GetX() >= 0)//forward right
-			{
-				lefty.Set(pilot.GetY() * negate);//left motors full
-				leftyB.Set(pilot.GetY() * negate);//left motors full
-				righty.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate);//right motors full dec by twiceX abs X
-				rightyB.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate);
-			}//(so up to x = 0 right rev and when y negative, backward curve)
-			else if (pilot.GetY() < 0 && pilot.GetX() > 0)//backward left
-			{
-				righty.Set(pilot.GetY() * negate * -1);
-				rightyB.Set(pilot.GetY() * negate * -1);
-				lefty.Set((pilot.GetY() - pilot.GetX() * 2) * negate);
-				leftyB.Set((pilot.GetY() - pilot.GetX() * 2) * negate);
-			}
-			else if (pilot.GetY() > 0 && pilot.GetX() <= 0)//forward left
-			{
-				righty.Set(pilot.GetY() * negate);
-				rightyB.Set(pilot.GetY() * negate);
-				lefty.Set((pilot.GetX() * 2 + pilot.GetY()) * negate);
-				leftyB.Set((pilot.GetX() * 2 + pilot.GetY()) * negate);
-			}
-			else if (pilot.GetY() < 0 && pilot.GetX() < 0)//back right
-			{
-				lefty.Set(pilot.GetY() * negate * -1);//left full back
-				leftyB.Set(pilot.GetY() * negate * -1);//left full back
-				righty.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate);//right morots full dec by twice abs X
-				rightyB.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate);
-			}
-			else
-			{
-				righty.Set(pilot.GetY() *negate);
-				rightyB.Set(pilot.GetY() *negate);
-				lefty.Set(pilot.GetY() *negate);
-				leftyB.Set(pilot.GetY() *negate);
-			}
-			//			END OF DRIVE
-			
+			drive();
 			
 			Wait(0.005);				// wait for a motor update time
 		}
@@ -204,5 +206,4 @@ public:
 	}
 };
 
-START_ROBOT_CLASS(SunGlasses);
-
+START_ROBOT_CLASS(SunGlassesAndTentacles);

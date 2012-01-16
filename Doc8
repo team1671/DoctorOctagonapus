@@ -1,5 +1,4 @@
-//cam and rail
-
+//cam and rail to be added
 #include "WPILib.h"
 
 
@@ -10,11 +9,12 @@
 class SunGlasses : public SimpleRobot
 {
 	//declarations -- extra jag and gyro for balance?
-	Encoder /*leftyEnc, rightyEnc,*/ yawEnc, pitchEnc, LTopEnc, LBotEnc;
+	Encoder yawEnc, /*pitchEnc,*/ LTopEnc, LBotEnc;
 	Joystick pilot, copilot;
-	CANJaguar lefty, righty, leftyB, rightyB, intake, lift, raiseTower, yaw, pitch, LTop, LBot;
+	CANJaguar lefty, righty, leftyB, rightyB, intake, lift, raiseTower, yaw, /*pitch,*/ LTop, LBot;
 	bool raiseB;
-	short int negate;
+	signed char negate;
+	double target;
 	
 public:
 	SunGlasses(void):
@@ -28,40 +28,47 @@ public:
 		lift(4),
 		raiseTower(5),
 		yaw(6),
-		pitch(7),
+		//pitch(7),
 		LTop(8),
 		LBot(9),
-		//leftyEnc(1,2),
-		//rightyEnc(3,4),
 		LTopEnc(5,6),
 		LBotEnc(5,6),
-		yawEnc(7,8),
-		pitchEnc(9,10)
+		yawEnc(7,8)//,
+		//pitchEnc(9,10)
 		{
+			lefty.ChangeControlMode(CANJaguar::kPercentVbus);
+			righty.ChangeControlMode(CANJaguar::kPercentVbus);
+			leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
+			rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
+			intake.ChangeControlMode(CANJaguar::kPercentVbus);
+			lift.ChangeControlMode(CANJaguar::kPercentVbus);
+			raiseTower.ChangeControlMode(CANJaguar::kPercentVbus);
+			yaw.ChangeControlMode(CANJaguar::kPercentVbus);
+			//pitch.ChangeControlMode(CANJaguar::kPercentVbus);
+			LTop.ChangeControlMode(CANJaguar::kPercentVbus);
+			LBot.ChangeControlMode(CANJaguar::kPercentVbus);
+			raiseB=1;
+			negate=1;
+			target=0;
+			//with cam class, set target to pulses from aiming at hoop
+			//convert from theta to pulse  --  out of 400 to 1440 
+			yawEnc.Reset();//WTH IS DOCUMENTATION FOR SETTING PPR??
+			yawEnc.Start();//will have to for other encoders too
 		}
 	
 	void Autonomous(void)
 	{
 		GetWatchdog().Kill();
-		lefty.ChangeControlMode(CANJaguar::kPercentVbus);
-		righty.ChangeControlMode(CANJaguar::kPercentVbus);
-		leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
-		rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
-		intake.ChangeControlMode(CANJaguar::kPercentVbus);
-		lift.ChangeControlMode(CANJaguar::kPercentVbus);
-		raiseTower.ChangeControlMode(CANJaguar::kPercentVbus);
-		yaw.ChangeControlMode(CANJaguar::kPercentVbus);
-		pitch.ChangeControlMode(CANJaguar::kPercentVbus);
-		LTop.ChangeControlMode(CANJaguar::kPercentVbus);
-		LBot.ChangeControlMode(CANJaguar::kPercentVbus);
-		
-		
+		while (IsAutonomous())
+		{
+			//use shooting class later && raise lift
+			
+		}
+		//yawEnc.Stop();
 	}
 	void OperatorControl(void)
 	{
 		GetWatchdog().Kill();
-		raiseB=1;
-		negate=1;
 		while (IsOperatorControl())
 		{
 			if (copilot.GetRawButton(1))
@@ -85,15 +92,28 @@ public:
 				/*
 				 * For Use:
 					yaw
-					pitch
+					pitch??
 					LTop
 					LBot
 					LTopEnc
 					LBotEnc
 					yawEnc
-					pitchEnc
+					pitchEnc??
 					lift
 				 */
+/*later make this a class for use in auton also
+  				if (yawEnc.Get() == 1440 || yawEnc.Get() == -1440)
+					yawEnc.Reset();
+					
+				if (yawEnc.Get() > target + 10)//DESPERATE NEED OF PID -- use canjags awesomeness
+					yaw.Set(-1);//20 ping range temp solution XD
+				else if (yawEnc.Get() < target - 10)
+					yaw.Set(1);
+				else
+					yaw.Set(0);
+				
+				here set top and bot to speeds using algorithim and distance
+*/				
 				
 				
 				
@@ -102,14 +122,14 @@ public:
 			else//for top override
 			{
 
-				lift.Set(copilot.GetY());//raise ball (act on 2 jags)
+				lift.Set(copilot.GetY());//lift or lower tower
 				LTop.Set(1);
 				LBot.Set(-1);
 				if (copilot.GetTop())
 				{
 					yaw.Set(-.3);
 				}
-				else if (copilot.GetTrigger())//lower tower top tower
+				else if (copilot.GetTrigger())//turn top tower
 				{
 					yaw.Set(.3);
 				}
@@ -120,15 +140,15 @@ public:
 				
 				if (copilot.GetRawButton(3))
 				{
-					pitch.Set(.3);
+					//pitch.Set(.3);
 				}
 				else if (copilot.GetRawButton(4))
 				{
-					pitch.Set(-.3);
+					//pitch.Set(-.3);
 				}
 				else
 				{
-					pitch.Set(0);
+					//pitch.Set(0);
 				}
 			}
 			
@@ -166,12 +186,10 @@ public:
 			{
 				righty.Set(-1*negate);
 				rightyB.Set(-1*negate);
-			}
-			
-			
-				
+			}	
 			Wait(0.005);				// wait for a motor update time
 		}
+		yawEnc.Stop();
 	}
 };
 

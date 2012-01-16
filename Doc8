@@ -62,7 +62,8 @@ public:
 		while (IsAutonomous())
 		{
 			//use shooting class later && raise lift
-			
+
+			Wait(0.005);				// wait for a motor update time
 		}
 		//yawEnc.Stop();
 	}
@@ -154,39 +155,49 @@ public:
 			
 			intake.Set(copilot.GetTwist());
 			
-			//Drive
-			if (pilot.GetRawButton(1)){negate *= -1;}
-			if (pilot.GetY() + 2 * pilot.GetX() > -1 && pilot.GetY() + 2 * pilot.GetX() < 1)
-			{
-				lefty.Set((pilot.GetY() + 2 * pilot.GetX()) *negate);//left thumb?
-				leftyB.Set((pilot.GetY() + 2 * pilot.GetX()) *negate);//left thumb?
-			}
-			else if ( pilot.GetY() + 2 * pilot.GetX() >= 1)
-			{
-				lefty.Set(1*negate);
-				leftyB.Set(1*negate);
-			}
-			else 
-			{
-				lefty.Set(-1*negate);
-				leftyB.Set(-1*negate);
-			}
 			
-			if (pilot.GetY() - 2 * pilot.GetX() > -1 && pilot.GetY() - 2 * pilot.GetX() < 1)
+			
+			//			DRIVE AND PILOT
+			if (pilot.GetRawButton(1)){negate *= -1;}//to reverse drive
+			
+			if (pilot.GetY() > 0 && pilot.GetX() >= 0)//forward right
 			{
-				righty.Set((pilot.GetY() - 2 * pilot.GetX()) *negate);//twist is w/z
-				rightyB.Set((pilot.GetY() - 2 * pilot.GetX()) *negate);//twist is w/z
+				lefty.Set(pilot.GetY() * negate);//left motors full
+				leftyB.Set(pilot.GetY() * negate);//left motors full
+				righty.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate);//right motors full dec by twiceX abs X
+				rightyB.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate);
+			}//(so up to x = 0 right rev and when y negative, backward curve)
+			else if (pilot.GetY() < 0 && pilot.GetX() > 0)//backward left
+			{
+				righty.Set(pilot.GetY() * negate * -1);
+				rightyB.Set(pilot.GetY() * negate * -1);
+				lefty.Set((pilot.GetY() - pilot.GetX() * 2) * negate);
+				leftyB.Set((pilot.GetY() - pilot.GetX() * 2) * negate);
 			}
-			else if ( pilot.GetY() - 2 * pilot.GetX() >= 1)
+			else if (pilot.GetY() > 0 && pilot.GetX() <= 0)//forward left
 			{
-				righty.Set(1*negate);
-				rightyB.Set(1*negate);
+				righty.Set(pilot.GetY() * negate);
+				rightyB.Set(pilot.GetY() * negate);
+				lefty.Set((pilot.GetX() * 2 + pilot.GetY()) * negate);
+				leftyB.Set((pilot.GetX() * 2 + pilot.GetY()) * negate);
 			}
-			else 
+			else if (pilot.GetY() < 0 && pilot.GetX() < 0)//back right
 			{
-				righty.Set(-1*negate);
-				rightyB.Set(-1*negate);
-			}	
+				lefty.Set(pilot.GetY() * negate * -1);//left full back
+				leftyB.Set(pilot.GetY() * negate * -1);//left full back
+				righty.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate);//right morots full dec by twice abs X
+				rightyB.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate);
+			}
+			else
+			{
+				righty.Set(pilot.GetY() *negate);
+				rightyB.Set(pilot.GetY() *negate);
+				lefty.Set(pilot.GetY() *negate);
+				leftyB.Set(pilot.GetY() *negate);
+			}
+			//			END OF DRIVE
+			
+			
 			Wait(0.005);				// wait for a motor update time
 		}
 		yawEnc.Stop();

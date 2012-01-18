@@ -1,209 +1,208 @@
 //cam and rail to be added
-//Note: drive is car drive
+//Note: drive is car drive and named creep
 #include "WPILib.h"
+
+
 
 #define IO (DriverStation::GetInstance()->GetEnhancedIO())
 
-class DOGP : public SimpleRobot
+class ironsInTheFire : public SimpleRobot
 {
 	//declarations -- extra jag and gyro for balance?
-	Encoder yawEnc, /*pitchEnc,*/ LTopEnc, LBotEnc;
+	Encoder yawEnc, /*pitchEnc,*/ LTopEnc, LBotEnc;//Lazer top %reference
 	Joystick pilot, copilot;
 	CANJaguar lefty, righty, leftyB, rightyB, intake, lift, raiseTower, yaw, /*pitch,*/ LTop, LBot;
 	bool raiseB;
 	signed char negate;
-	double target;
+	double flies;//target Vriska reference
 	
 public:
-	DOGP(void);
-	void DoctorOctagonapus(void);
-	void fireMuhLazer(void);	
-	void drive(void);	
-	void Autonomous(void);
-	void OperatorControl(void);
+	ironsInTheFire(void)://%reference
+		pilot(1),
+		copilot(2),
+		lefty(1),
+		righty(2),
+		leftyB(10),
+		rightyB(11),//not possible with 1 sidecar but bc/can drive, will not use sidecar
+		intake(3),
+		lift(4),
+		raiseTower(5),
+		yaw(6),
+		//pitch(7),
+		LTop(8),
+		LBot(9),
+		LTopEnc(5,6),
+		LBotEnc(5,6),
+		yawEnc(7,8)//,
+		//pitchEnc(9,10)
+		{
+			lefty.ChangeControlMode(CANJaguar::kPercentVbus);
+			righty.ChangeControlMode(CANJaguar::kPercentVbus);
+			leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
+			rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
+			intake.ChangeControlMode(CANJaguar::kPercentVbus);
+			lift.ChangeControlMode(CANJaguar::kPercentVbus);
+			raiseTower.ChangeControlMode(CANJaguar::kPercentVbus);
+			yaw.ChangeControlMode(CANJaguar::kPercentVbus);
+			//pitch.ChangeControlMode(CANJaguar::kPercentVbus);
+			LTop.ChangeControlMode(CANJaguar::kPercentVbus);
+			LBot.ChangeControlMode(CANJaguar::kPercentVbus);
+			raiseB=1;
+			negate=1;
+			flies=0;
+			//with cam class, set target to pulses from aiming at hoop
+			//convert from theta to pulse  --  out of 400 to 1440 
+			yawEnc.Reset();//WTH IS DOCUMENTATION FOR SETTING PPR??
+			yawEnc.Start();//will have to for other encoders too
+		}
+	
+	void DOGP(void)//%reference
+	{
+		/* For Use:
+		pitch??
+		pitchEnc??
+		 */
+			if (yawEnc.Get() == 1440 || yawEnc.Get() == -1440)
+				yawEnc.Reset();
+			if (yawEnc.Get() > flies + 10)//DESPERATE NEED OF PID -- use canjags awesomeness
+				yaw.Set(-1);				//20 ping range temp solution XD
+			else if (yawEnc.Get() < flies - 10)
+				yaw.Set(1);
+			else
+				yaw.Set(0);
+		//here set top and bot to speeds using algorithim and distance
+	}
+	
+	void fireMuhLazer(void)//&reference
+	{
+		DOGP();
+		/*For Use:
+		LTop
+		LBot
+		LTopEnc
+		LBotEnc
+		lift
+		*/
+		
+	}
+	
+	void creep(void)//Vriska reference
+	{				
+		if (pilot.GetY() > 0 && pilot.GetX() >= 0)//forward right
+		{
+			lefty.Set(pilot.GetY() * negate);//left motors full
+			leftyB.Set(pilot.GetY() * negate);//left motors full
+			righty.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate);//right motors full dec by twiceX abs X
+			rightyB.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate);
+		}//(so up to x = 0 right rev and when y negative, backward curve)
+		else if (pilot.GetY() < 0 && pilot.GetX() > 0)//backward left
+		{
+			righty.Set(pilot.GetY() * negate * -1);
+			rightyB.Set(pilot.GetY() * negate * -1);
+			lefty.Set((pilot.GetY() - pilot.GetX() * 2) * negate);
+			leftyB.Set((pilot.GetY() - pilot.GetX() * 2) * negate);
+		}
+		else if (pilot.GetY() > 0 && pilot.GetX() <= 0)//forward left
+		{
+			righty.Set(pilot.GetY() * negate);
+			rightyB.Set(pilot.GetY() * negate);
+			lefty.Set((pilot.GetX() * 2 + pilot.GetY()) * negate);
+			leftyB.Set((pilot.GetX() * 2 + pilot.GetY()) * negate);
+		}
+		else if (pilot.GetY() < 0 && pilot.GetX() < 0)//back right
+		{
+			lefty.Set(pilot.GetY() * negate * -1);//left full back
+			leftyB.Set(pilot.GetY() * negate * -1);//left full back
+			righty.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate);//right morots full dec by twice abs X
+			rightyB.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate);
+		}
+		else
+		{
+			righty.Set(pilot.GetY() *negate);
+			rightyB.Set(pilot.GetY() *negate);
+			lefty.Set(pilot.GetY() *negate);
+			leftyB.Set(pilot.GetY() *negate);
+		}
+	}
+	
+	void Autonomous(void)
+	{
+		GetWatchdog().Kill();
+		while (IsAutonomous())
+		{
+			fireMuhLazer();
+			Wait(0.005);				// wait for a motor update time
+		}
+		//yawEnc.Stop();
+	}
+	void OperatorControl(void)
+	{
+		GetWatchdog().Kill();
+		while (IsOperatorControl())
+		{
+			if (copilot.GetRawButton(1))
+				raiseB = 1;
+			else if (copilot.GetRawButton(2))
+				raiseB = 0;
+			
+			if (raiseB)//for tower controll
+			{
+				if (copilot.GetTop())//trigger top left - top tower
+				{
+					raiseTower.Set(1);
+				}
+				else if (copilot.GetTrigger())//lower tower top tower
+				{
+					raiseTower.Set(-1);
+				}
+				else {raiseTower.Set(0);}
+				
+				fireMuhLazer();
+				
+			}
+			else//for top override
+			{
+
+				lift.Set(copilot.GetY());//lift or lower tower
+				LTop.Set(1);
+				LBot.Set(-1);
+				if (copilot.GetTop())
+				{
+					yaw.Set(-.3);
+				}
+				else if (copilot.GetTrigger())//turn top tower
+				{
+					yaw.Set(.3);
+				}
+				else
+				{
+					yaw.Set(0);
+				}
+				
+				if (copilot.GetRawButton(3))
+				{
+					//pitch.Set(.3);
+				}
+				else if (copilot.GetRawButton(4))
+				{
+					//pitch.Set(-.3);
+				}
+				else
+				{
+					//pitch.Set(0);
+				}
+			}
+			
+			intake.Set(copilot.GetTwist());
+			
+
+			if (pilot.GetRawButton(1)){negate *= -1;}//to reverse creep
+			creep();
+			
+			Wait(0.005);				// wait for a motor update time
+		}
+		yawEnc.Stop();
+	}
 };
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-DOGP::DOGP(void):
-	pilot(1),
-	copilot(2),
-	lefty(1),
-	righty(2),
-	leftyB(10),
-	rightyB(11),//not possible with 1 sidecar but bc/can drive, will not use sidecar
-	intake(3),
-	lift(4),
-	raiseTower(5),
-	yaw(6),
-	//pitch(7),
-	LTop(8),
-	LBot(9),
-	LTopEnc(5,6),
-	LBotEnc(5,6),
-	yawEnc(7,8)//,
-	//pitchEnc(9,10)
-{
-	lefty.ChangeControlMode(CANJaguar::kPercentVbus);
-	righty.ChangeControlMode(CANJaguar::kPercentVbus);
-	leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
-	rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
-	intake.ChangeControlMode(CANJaguar::kPercentVbus);
-	lift.ChangeControlMode(CANJaguar::kPercentVbus);
-	raiseTower.ChangeControlMode(CANJaguar::kPercentVbus);
-	yaw.ChangeControlMode(CANJaguar::kPercentVbus);
-	//pitch.ChangeControlMode(CANJaguar::kPercentVbus);
-	LTop.ChangeControlMode(CANJaguar::kPercentVbus);
-	LBot.ChangeControlMode(CANJaguar::kPercentVbus);
-	raiseB=1;
-	negate=1;
-	target=0;
-	//with cam class, set target to pulses from aiming at hoop
-	//convert from theta to pulse  --  out of 400 to 1440 
-	yawEnc.Reset();//WTH IS DOCUMENTATION FOR SETTING PPR??
-	yawEnc.Start();//will have to for other encoders too
-}
-
-void DOGP::DoctorOctagonapus(void)
-{
-	/* For Use:
-	pitch??
-	pitchEnc??
-	 */
-		if (yawEnc.Get() == 1440 || yawEnc.Get() == -1440)
-			yawEnc.Reset();
-		if (yawEnc.Get() > target + 10)//DESPERATE NEED OF PID -- use canjags awesomeness
-			yaw.Set(-1);				//20 ping range temp solution XD
-		else if (yawEnc.Get() < target - 10)
-			yaw.Set(1);
-		else
-			yaw.Set(0);
-	//here set top and bot to speeds using algorithim and distance
-}
-
-void DOGP::fireMuhLazer(void)
-{
-	DOGP();
-	/*For Use:
-	LTop
-	LBot
-	LTopEnc
-	LBotEnc
-	lift
-	*/
-}
-
-void DOGP::drive(void)
-{
-	float Lpower(0), Rpower(0);
-	if (pilot.GetY() > 0 && pilot.GetX() >= 0)//forward right
-	{
-		Lpower=pilot.GetY() * negate;//left motors full
-		Rpower=( pilot.GetY() - pilot.GetX() * 2  * negate);//right motors full dec by twiceX abs X
-	}//(so up to x = 0 right rev and when y negative, backward curve)
-	else if (pilot.GetY() < 0 && pilot.GetX() > 0)//backward left
-	{
-		Lpower=(pilot.GetY() - pilot.GetX() * 2) * negate;
-		Rpower=pilot.GetY() * negate * -1;
-	}
-	else if (pilot.GetY() > 0 && pilot.GetX() <= 0)//forward left
-	{
-		Lpower=(pilot.GetX() * 2 + pilot.GetY()) * negate;
-		Rpower=pilot.GetY() * negate;
-	}
-	else if (pilot.GetY() < 0 && pilot.GetX() < 0)//back right
-	{
-		Lpower=pilot.GetY() * negate * -1;//left full back
-		Rpower=( pilot.GetY() + pilot.GetX() * 2 ) * negate;//right morots full dec by twice abs X
-	}
-	else
-	{
-		Lpower=pilot.GetY() *negate;
-		Rpower=pilot.GetY() *negate;
-	}
-	lefty.Set(Lpower);
-	leftyB.Set(Lpower);
-	righty.Set(Rpower);
-	rightyB.Set(Rpower);
-}
-
-void DOGP::Autonomous(void)
-{
-	GetWatchdog().Kill();
-	while (IsAutonomous())
-	{
-		fireMuhLazer();
-		Wait(0.005);				// wait for a motor update time
-	}
-	//yawEnc.Stop();
-}
-
-void DOGP::OperatorControl(void)
-{
-	GetWatchdog().Kill();
-	while (IsOperatorControl())
-	{
-		if (copilot.GetRawButton(1))
-			raiseB = 1;
-		else if (copilot.GetRawButton(2))
-			raiseB = 0;
-		
-		if (raiseB)//for tower controll
-		{
-			if (copilot.GetTop())//trigger top left - top tower
-			{
-				raiseTower.Set(1);
-			}
-			else if (copilot.GetTrigger())//lower tower top tower
-			{
-				raiseTower.Set(-1);
-			}
-			else {raiseTower.Set(0);}
-			
-			fireMuhLazer();
-		}
-		else//for top override
-		{
-			lift.Set(copilot.GetY());//lift or lower tower
-			LTop.Set(1);
-			LBot.Set(-1);
-			if (copilot.GetTop())
-			{
-				yaw.Set(-.3);
-			}
-			else if (copilot.GetTrigger())//turn top tower
-			{
-				yaw.Set(.3);
-			}
-			else
-			{
-				yaw.Set(0);
-			}
-			
-			if (copilot.GetRawButton(3))
-			{
-				//pitch.Set(.3);
-			}
-			else if (copilot.GetRawButton(4))
-			{
-				//pitch.Set(-.3);
-			}
-			else
-			{
-				//pitch.Set(0);
-			}
-		}
-		
-		intake.Set(copilot.GetTwist());
-		
-		if (pilot.GetRawButton(1)){negate *= -1;}//to reverse drive
-		drive();
-		
-		Wait(0.005);				// wait for a motor update time
-	}
-	yawEnc.Stop();
-}
-
-START_ROBOT_CLASS(DOGP);
+START_ROBOT_CLASS(ironsInTheFire);

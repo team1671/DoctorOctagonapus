@@ -19,7 +19,7 @@ private:
 	PIDController *cd_pPID[MAX_MOTORS];
 	float mot_dir[MAX_MOTORS];
 	Encoder *cd_pEncoders[MAX_MOTORS];
-	Gyro *gyro;
+//	Gyro *gyro;
 
 public:
 	CustomDrive(void);

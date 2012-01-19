@@ -10,7 +10,7 @@ CustomDrive::CustomDrive(void)
 	{
 		cd_pMotors[i] = 0;
 	};
-	gyro = NULL;
+//	gyro = NULL;
 };
 
 CustomDrive::CustomDrive(int _nJags)
@@ -33,7 +33,7 @@ CustomDrive::CustomDrive(int _nJags, int _gyroPort)
 	{
 		cd_pMotors[i] = new Jaguar(i+1);
 	};
-	gyro = new Gyro(_gyroPort);
+//	gyro = new Gyro(_gyroPort);
 };
 
 //*****TANK DRIVE*****

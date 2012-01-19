@@ -9,7 +9,7 @@
 class Jaguar;
 class Joystick;
 class Encoder;
-class Gyro;
+//class Gyro;
 
 class CustomDrive
 {

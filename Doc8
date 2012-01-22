@@ -7,15 +7,29 @@
 
 #define IO (DriverStation::GetInstance()->GetEnhancedIO())//driver station input/output
 
+//this part was added so the electronics team doesn't have to dig through code to make port changes
+#define PILOT_PORT 1
+#define COPILOT_PORT 2
+#define LEFTY_PORT 1
+#define RIGHTY_PORT 2
+#define LEFTYB_PORT 4
+#define RIGHTYB_PORT 5
+#define ARM_PORT 3
+#define INTAKE_PORT 6
+#define LIFT_PORT 7
+#define LTOP_PORT 8
+#define LBOTTOM_PORT 9
+
 AxisCamera &camera = AxisCamera::GetInstance();//live feed to driverstation instead of flawed nvision stuff
 ColorImage image(IMAQ_IMAGE_RGB);//create an image
 
-class ironsInTheFire : public SimpleRobot
+class Snowman : public SimpleRobot
 {
 	//declarations -- extra jag and gyro for balance?
+    Jaguar teeth, intestines;
 	Encoder LTopEnc, LBotEnc;//launch system   --  Lazer reference XD
 	Joystick pilot, copilot;
-	CANJaguar lefty, righty, leftyB, rightyB, intake, lift, LTop, LBot, arm;
+	CANJaguar lefty, righty, leftyB, rightyB, teeth, intestines, LTop, LBot, arm;
 	signed char negate, fPS;//find max FPS w/out slowing rob then use that as base
 							//increase if turning fast and needed
 	double flies, distance;//flies is a Vriska reference and refers to the angle from the target
@@ -23,23 +37,23 @@ class ironsInTheFire : public SimpleRobot
 	float decrement;//is set in DOGP to lower turning speed as nearing 0 flies
 					//begins at full until within a range; then increasing rate of decrimate
 public:
-	ironsInTheFire(void)://Vriska reference and class name also
+	Snowman(void)://Vriska reference and class name also
 		
-		pilot(1),//below are constructors and such
-		copilot(2),//pilot and copilot are in USB ports (adjustable via driverstation)
+		pilot(PILOT_PORT),//below are constructors and such
+		copilot(COPILOT_PORT),//pilot and copilot are in USB ports (adjustable via driverstation)
 		
-		lefty(1),//here until  V
-		righty(2),
-		arm(3),
-		leftyB(4),
-		rightyB(5),
-		intake(6),
-		lift(7),
-		LTop(8),
-		LBot(9),//HERE are jags that need to be in the order in which they are plugged in
+		lefty(LEFTY_PORT),//here until  V
+		righty(RIGHTY_PORT),
+		leftyB(LEFTYB_PORT),
+		rightyB(RIGHTYB_PORT),
+		arm(ARM_PORT),
+		intake(INTAKE_PORT),
+		lift(LIFT_PORT),
+		LTop(LTOP_PORT),
+		LBot(LBOTTOM_PORT),//HERE are jags that need to be in the order in which they are plugged in
 		
-		LTopEnc(1,2),//encoders -- 2 channels each;  add drive encoders -- 2 or 4?
-		LBotEnc(3,4)
+		//LTopEnc(1,2),//encoders -- 2 channels each;  add drive encoders -- 2 or 4?encoders are part of the jags
+		//LBotEnc(3,4)
 	
 		{
 			fPS = 6;//later will change in loop depending on factors explained above
@@ -127,7 +141,16 @@ public:
 			leftyB.Set(pilot.GetY() *negate * decrement);
 		}
 	}
-	
+
+    void consume(void)
+    {
+        if(/*whether we want a ball taken in or not...*/)
+            teeth.Set(0.3);
+    }
+    void digest(void)
+    {
+        intesines.Set(0.3);
+    }	
 	void Autonomous(void)
 	{
 		GetWatchdog().Kill();
@@ -165,4 +188,4 @@ public:
 	}
 };
 
-START_ROBOT_CLASS(ironsInTheFire);//called by driverstation
+START_ROBOT_CLASS(Snowman);//called by driverstation

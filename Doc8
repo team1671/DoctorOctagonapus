@@ -1,219 +1,168 @@
-//cam and rail to be added
-//Note: drive is car drive and named creep
-#include "WPILib.h"
+//ctually use drive encoders to ensure ratio of speed is correct
+//cam
+//see DOGP and fireMuhLazer for other changes to be made
 
-#define IO (DriverStation::GetInstance()->GetEnhancedIO())
+#include "WPILib.h"//include main lib
+#include "nivision.h"
+
+#define IO (DriverStation::GetInstance()->GetEnhancedIO())//driver station input/output
+
+AxisCamera &camera = AxisCamera::GetInstance();//live feed to driverstation instead of flawed nvision stuff
+ColorImage image(IMAQ_IMAGE_RGB);//create an image
 
 class ironsInTheFire : public SimpleRobot
 {
 	//declarations -- extra jag and gyro for balance?
-	Encoder pitchEnc, LTopEnc, LBotEnc;//Lazer top %reference //PITCH HAS ENCODER yaw does not
+	Encoder LTopEnc, LBotEnc;//launch system   --  Lazer reference XD
 	Joystick pilot, copilot;
-	CANJaguar lefty, righty, leftyB, rightyB;//bottom motors
-	CANJaguar intake, lift, raiseTower, yaw, pitch, LTop, LBot;
-	bool raiseB;
-	signed char negate;//reverse the driving style
-	double flies_unicorn;//target horizonal location Vriska reference
-	double flies_unicorn_cc;//target x position conversion constant
-	double flies_pegasus;//target y position
-	
+	CANJaguar lefty, righty, leftyB, rightyB, intake, lift, LTop, LBot, arm;
+	signed char negate, fPS;//find max FPS w/out slowing rob then use that as base
+							//increase if turning fast and needed
+	double flies, distance;//flies is a Vriska reference and refers to the angle from the target
+						//distance will be a guessed distance from target via the camera code
+	float decrement;//is set in DOGP to lower turning speed as nearing 0 flies
+					//begins at full until within a range; then increasing rate of decrimate
 public:
-	ironsInTheFire(void)://%reference
-		pilot(1),
-		copilot(2),
-		lefty(1),
+	ironsInTheFire(void)://Vriska reference and class name also
+		
+		pilot(1),//below are constructors and such
+		copilot(2),//pilot and copilot are in USB ports (adjustable via driverstation)
+		
+		lefty(1),//here until  V
 		righty(2),
-		leftyB(10),
-		rightyB(11),//not possible with 1 sidecar but bc/can drive, will not use sidecar
-		intake(3),
-		lift(4),
-		raiseTower(5),
-		yaw(6),
-		//pitch(7),
+		arm(3),
+		leftyB(4),
+		rightyB(5),
+		intake(6),
+		lift(7),
 		LTop(8),
-		LBot(9),
-		LTopEnc(5,6),
-		LBotEnc(5,6),
-//		yawEnc(7,8),
-		pitchEnc(9,10)
+		LBot(9),//HERE are jags that need to be in the order in which they are plugged in
+		
+		LTopEnc(1,2),//encoders -- 2 channels each;  add drive encoders -- 2 or 4?
+		LBotEnc(3,4)
+	
 		{
-			lefty.ChangeControlMode(CANJaguar::kPercentVbus);
+			fPS = 6;//later will change in loop depending on factors explained above
+			camera.WriteMaxFPS(fPS);//needs to be called after above
+			camera.WriteBrightness(0);
+			camera.WriteWhiteBalance(AxisCamera::kWhiteBalance_Automatic);//best for now; redo at comp
+			camera.WriteResolution(AxisCamera::kResolution_320x240);//higher = more accurate but slower
+			
+			decrement = 1;//value to slow jags when firing
+			negate=1;//changes orrientation of drive
+			
+			lefty.ChangeControlMode(CANJaguar::kPercentVbus);//constructs canJags
 			righty.ChangeControlMode(CANJaguar::kPercentVbus);
 			leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
 			rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
 			intake.ChangeControlMode(CANJaguar::kPercentVbus);
 			lift.ChangeControlMode(CANJaguar::kPercentVbus);
-			raiseTower.ChangeControlMode(CANJaguar::kPercentVbus);
-			yaw.ChangeControlMode(CANJaguar::kPercentVbus);
-			//pitch.ChangeControlMode(CANJaguar::kPercentVbus);
 			LTop.ChangeControlMode(CANJaguar::kPercentVbus);
 			LBot.ChangeControlMode(CANJaguar::kPercentVbus);
-			raiseB=1;
-			negate=1;
-			flies=0;
-			//with cam class, set target to pulses from aiming at hoop
-			//convert from theta to pulse  --  out of 400 to 1440 
-//			yawEnc.Reset();//WTH IS DOCUMENTATION FOR SETTING PPR??
-//			yawEnc.Start();//will have to for other encoders too
-			yaw.SetPID(0,0,0)//change settings in experimental stage
+			
+			LTopEnc.Reset();//set encoder to 0
+			LBotEnc.Reset();
+			LTopEnc.Start();//start encoder
+			LBotEnc.Start();
+			//add drive encoders
 		}
-
-	void aimh()
-	{
-		yaw.PIDWrite(-flies_unicorn*flies_unicorn_cc);
-	}
-	void aimv()
-	{
-		//HOLY    DIVER, OH MY      CELESTA, WHAT THE     HEAVEN, MOTHER    SHIP
-	}
-
+	
 	void DOGP(void)//%reference
 	{
-		/* For Use:
-		pitch??
-		pitchEnc??
-		 */
-			if (yawEnc.Get() == 1440 || yawEnc.Get() == -1440)
-				yawEnc.Reset();
-			if (yawEnc.Get() > flies + 10)//DESPERATE NEED OF PID -- use canjags awesomeness
-				yaw.Set(-1);				//20 ping range temp solution XD
-			else if (yawEnc.Get() < flies - 10)
-				yaw.Set(1);
-			else
-				yaw.Set(0);
-		//here set top and bot to speeds using algorithim and distance
+		camera.GetImage(&image);//rest of tracking loop here also
+		//with cam, set distance and flies
+		
+		/*
+		 * put movement in a loop which terminates when aiming correctly (will need
+		 * image tracking from above) 
+		 * change decrement as turning or moving if not in range (turning and movement
+		 * will require setting X and Y values as are in creep)
+		 * 
+		 * Also, calculate speed for top and bot jags and set
+		*/
 	}
-
+	
 	void fireMuhLazer(void)//&reference
 	{
 		DOGP();
-		/*For Use:
-		LTop
-		LBot
-		LTopEnc
-		LBotEnc
-		lift
-		*/
-
+		//move balls up  --  will require a wait
+		//turn off ltop and lbot and lift and intake
 	}
-
-	void creep(void)//Vriska reference
+	
+	void creep(void)//Vriska reference and drive system -- system similar to a car
 	{				
 		if (pilot.GetY() > 0 && pilot.GetX() >= 0)//forward right
 		{
-			lefty.Set(pilot.GetY() * negate);//left motors full
-			leftyB.Set(pilot.GetY() * negate);//left motors full
-			righty.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate);//right motors full dec by twiceX abs X
-			rightyB.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate);
+			lefty.Set(pilot.GetY() * negate * decrement);//left motors full
+			leftyB.Set(pilot.GetY() * negate * decrement);//left motors full
+			righty.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate * decrement);//right motors full dec by twiceX abs X
+			rightyB.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate * decrement);
 		}//(so up to x = 0 right rev and when y negative, backward curve)
 		else if (pilot.GetY() < 0 && pilot.GetX() > 0)//backward left
 		{
-			righty.Set(pilot.GetY() * negate * -1);
-			rightyB.Set(pilot.GetY() * negate * -1);
-			lefty.Set((pilot.GetY() - pilot.GetX() * 2) * negate);
-			leftyB.Set((pilot.GetY() - pilot.GetX() * 2) * negate);
+			righty.Set(pilot.GetY() * negate * -1 * decrement);
+			rightyB.Set(pilot.GetY() * negate * -1 * decrement);
+			lefty.Set((pilot.GetY() - pilot.GetX() * 2) * negate * decrement);
+			leftyB.Set((pilot.GetY() - pilot.GetX() * 2) * negate * decrement);
 		}
 		else if (pilot.GetY() > 0 && pilot.GetX() <= 0)//forward left
 		{
-			righty.Set(pilot.GetY() * negate);
-			rightyB.Set(pilot.GetY() * negate);
-			lefty.Set((pilot.GetX() * 2 + pilot.GetY()) * negate);
-			leftyB.Set((pilot.GetX() * 2 + pilot.GetY()) * negate);
+			righty.Set(pilot.GetY() * negate * decrement);
+			rightyB.Set(pilot.GetY() * negate * decrement);
+			lefty.Set((pilot.GetX() * 2 + pilot.GetY()) * negate * decrement);
+			leftyB.Set((pilot.GetX() * 2 + pilot.GetY()) * negate * decrement);
 		}
 		else if (pilot.GetY() < 0 && pilot.GetX() < 0)//back right
 		{
-			lefty.Set(pilot.GetY() * negate * -1);//left full back
-			leftyB.Set(pilot.GetY() * negate * -1);//left full back
-			righty.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate);//right morots full dec by twice abs X
-			rightyB.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate);
+			lefty.Set(pilot.GetY() * negate * -1 * decrement);//left full back
+			leftyB.Set(pilot.GetY() * negate * -1 * decrement);//left full back
+			righty.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate * decrement);//right morots full dec by twice abs X
+			rightyB.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate * decrement);
 		}
 		else
 		{
-			righty.Set(pilot.GetY() *negate);
-			rightyB.Set(pilot.GetY() *negate);
-			lefty.Set(pilot.GetY() *negate);
-			leftyB.Set(pilot.GetY() *negate);
+			righty.Set(pilot.GetY() *negate * decrement);
+			rightyB.Set(pilot.GetY() *negate * decrement);
+			lefty.Set(pilot.GetY() *negate * decrement);
+			leftyB.Set(pilot.GetY() *negate * decrement);
 		}
 	}
-
+	
 	void Autonomous(void)
 	{
 		GetWatchdog().Kill();
 		while (IsAutonomous())
 		{
-			fireMuhLazer();
-			Wait(0.005);				// wait for a motor update time
+			DOGP();//aim and shoot
 		}
-		//yawEnc.Stop();
 	}
 	void OperatorControl(void)
 	{
 		GetWatchdog().Kill();
 		while (IsOperatorControl())
 		{
-			if (copilot.GetRawButton(1))
-				raiseB = 1;
-			else if (copilot.GetRawButton(2))
-				raiseB = 0;
-
-			if (raiseB)//for tower controll
-			{
-				if (copilot.GetTop())//trigger top left - top tower
-				{
-					raiseTower.Set(1);
-				}
-				else if (copilot.GetTrigger())//lower tower top tower
-				{
-					raiseTower.Set(-1);
-				}
-				else {raiseTower.Set(0);}
-
-				fireMuhLazer();
-
-			}
-			else//for top override
-			{
-
-				lift.Set(copilot.GetY());//lift or lower tower
-				LTop.Set(1);
-				LBot.Set(-1);
-				if (copilot.GetTop())
-				{
-					yaw.Set(-.3);
-				}
-				else if (copilot.GetTrigger())//turn top tower
-				{
-					yaw.Set(.3);
-				}
-				else
-				{
-					yaw.Set(0);
-				}
-
-				if (copilot.GetRawButton(3))
-				{
-					//pitch.Set(.3);
-				}
-				else if (copilot.GetRawButton(4))
-				{
-					//pitch.Set(-.3);
-				}
-				else
-				{
-					//pitch.Set(0);
-				}
-			}
-
-			intake.Set(copilot.GetTwist());
-
+				
+			if (copilot.GetTop())//for moving platform arm
+				arm.Set(-1);
+			else if (copilot.GetTrigger())
+				arm.Set(1);
+			else
+				arm.Set(0);
+			
+			if (copilot.GetRawButton(1))//aim and set jag power
+				DOGP();//aim and shoot
+			
+			intake.Set(copilot.GetTwist());//take in balls
 
 			if (pilot.GetRawButton(1)){negate *= -1;}//to reverse creep
-			creep();
-
-			Wait(0.005);				// wait for a motor update time
+			decrement = 1;//because full power for driver when not auto aiming
+			creep();//drive system
+			
 		}
-		yawEnc.Stop();
+		LTopEnc.Stop();//stop encoders
+		LBotEnc.Stop();
+		//include drive encoders
 	}
 };
 
-START_ROBOT_CLASS(ironsInTheFire);
+START_ROBOT_CLASS(ironsInTheFire);//called by driverstation

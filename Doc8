@@ -1,5 +1,7 @@
 /*
  *	Gage Ervin and Emmanuel Lopez		Team 1671 
+ *	what happened to the other 7?
+ *	historical references: Vriska and Doctaoctagonapus
  */
 
 
@@ -12,13 +14,15 @@
  * PILOT
  * car drive, but turns full forward/back at extreme
  * 1 will switch drive
- *
- *
+*/
+ 
+
+/*
  * determine lighting values
  *
  * launch enc for speed ratio
  * 
- * use cams to find distance
+ * determine what is wrong
  *
  * make warning if out of range
  *
@@ -29,11 +33,12 @@
 
 
 #include <iostream>
-//for consol IO
+//for console IO
 #include "WPILib.h"
 //duh
 #include "nivision.h"
 //for cams
+#include "math.h"
 
 #define IO (DriverStation::GetInstance()->GetEnhancedIO())
 //IO from driver station
@@ -61,7 +66,6 @@ class DoctaEight : public SimpleRobot
 	//calculated distance to target
 	float decrement;
 	//to slow motors as aiming
-	
 
 public:
 	DoctaEight(void):
@@ -94,7 +98,7 @@ public:
 			camera.WriteResolution(AxisCamera::kResolution_320x240);
 			//resolution
 
-			decrement = 1;
+			decrement=1;
 			negate=1;
 			
 			lefty.ChangeControlMode(CANJaguar::kPercentVbus);
@@ -130,49 +134,61 @@ public:
 		cout << "Number of targets: ";
 		//output number of targets
 		
-		for(UINT32 x = 0; x < particles->size(); x++)
-		{//goes acrossed particle
+		//find what point motors stop then this should be slightly above
+		while (decrement > .2 or decrement < -.2)
+		{
 			
-			ParticleAnalysisReport& par = (*particles)[x];
-			
-			/*
-			 * return stuff
-			 * 
-			par.imageHeight;
-			par.particleArea;
-			par.center_mass_y_normalized;
-			par.center_mass_x_normalized;
-			par.imageWidth;
-			*/
-			
-			if (par.center_mass_x_normalized > -.3  && par.center_mass_x_normalized < .3)
+			for(UINT32 x = 0; x < particles->size(); x++)
 			{
-				decrement = par.center_mass_x_normalized*2;
+				
+				ParticleAnalysisReport& par = (*particles)[x];
+				
+				/*
+				 * return stuff
+				 * 
+				par.imageHeight;
+				par.particleArea;
+				par.center_mass_y_normalized;
+				par.center_mass_x_normalized;
+				par.imageWidth;
+				*/
+				
+				if (par.center_mass_x_normalized > -.3  && par.center_mass_x_normalized < .3)
+				{
+					decrement = par.center_mass_x_normalized*2;
+				}
+				else
+					decrement = 1;
+				//lower speed if aiming at target or set back to 1
+				
+				
+				if(par.center_mass_x_normalized > 0)//right; 
+				{
+					righty.Set(0);
+					rightyB.Set(0);
+					lefty.Set(decrement);
+					leftyB.Set(decrement);
+				}
+				else if(par.center_mass_x_normalized < 0)//left
+				{
+					lefty.Set(0);
+					leftyB.Set(0);
+					righty.Set(decrement);
+					rightyB.Set(decrement);
+				}
 			}
-			else
-				decrement = 1;
-			//lower speed if aiming at target or set back to 1
-			
-			
-			if(par.center_mass_x_normalized > 0)//right; 
-			{
-				righty.Set(0);
-				rightyB.Set(0);
-				lefty.Set(decrement);
-				leftyB.Set(decrement);
-			}
-			else if(par.center_mass_x_normalized < 0)//left
-			{
-				lefty.Set(0);
-				leftyB.Set(0);
-				righty.Set(decrement);
-				rightyB.Set(decrement);
-			}
-			//aim
-			
 		}
+		//above aims
 		
-		//CALC DISTANCE HERE!!!!!!!!!!!!!!!!!!!!!!!!!
+		ParticleAnalysisReport& par = (*particles)[1/*not sure what this is && therefore is wrong*/];
+		
+		distance = 9//half height of target in inches over target to get adjacent
+						/tan(//tan of this to get opposite over adjacent
+								54*//angle of lens vision
+									((par.particleArea/24)//to get height in pixels
+										/par.imageHeight)//above divided to get ratio of size
+											/2);//to get half of angle and therefore right triangle
+		
 		//SHOOT HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		
 	}

@@ -1,37 +1,77 @@
-//copilot must hold button to turn and shoot; if presses 1 (just in case), will exit loop; 3 will reset(before shooting again)
-//actually use drive encoders to ensure ratio of speed is correct  && launch
-//cam
-//see DOGP and fireMuhLazer for other changes to be made
-//make warning if out of range
+/*
+ *	Gage Ervin and Emmanuel Lopez		Team 1671 
+ */
 
-#include "WPILib.h"//include main lib
+
+/*
+ * COPILOT CONTROL
+ * 2 to turn and shoot
+ * trigers will move arm
+ * intake is right thumbstick
+ * 
+ * PILOT
+ * car drive, but turns full forward/back at extreme
+ * 1 will switch drive
+ *
+ *
+ * determine lighting values
+ *
+ * launch enc for speed ratio
+ * 
+ * use cams to find distance
+ *
+ * make warning if out of range
+ *
+ * dashboard data examples
+ * 
+ * fix number of targets output && pick target
+*/
+
+
+#include <iostream>
+//for consol IO
+#include "WPILib.h"
+//duh
 #include "nivision.h"
+//for cams
 
-#define IO (DriverStation::GetInstance()->GetEnhancedIO())//driver station input/output
+#define IO (DriverStation::GetInstance()->GetEnhancedIO())
+//IO from driver station
+AxisCamera &camera = AxisCamera::GetInstance();
+//output from cameras to driverstation (so we can see it)
+ColorImage image(IMAQ_IMAGE_RGB);
+//create an image to buffer pics
 
-AxisCamera &camera = AxisCamera::GetInstance();//live feed to driverstation instead of flawed nvision stuff
-ColorImage image(IMAQ_IMAGE_RGB);//create an image
-
-
-class ironsInTheFire : public SimpleRobot
+class DoctaEight : public SimpleRobot
 {
-	//declarations -- extra jag and gyro for balance?
-	Encoder LTopEnc, LBotEnc;//launch system   --  Lazer reference XD
+	//declarations
+	
+	BinaryImage* binImg;
+	//make image
+	
+	Encoder LTopEnc, LBotEnc;
+	//launch system encoders
 	Joystick pilot, copilot;
+	//
 	CANJaguar lefty, righty, leftyB, rightyB, intake, lift, LTop, LBot, arm;
-	signed char negate, fPS;//find max FPS w/out slowing rob then use that as base
-							//increase if turning fast and needed
+	//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
+	signed char negate;
+	//negate for turning drive
 	double distance;
-						//distance will be a guessed distance from target via the camera code
-	float decrement;//lower as appr. target
-					//begins at full until within a range; then increasing rate of decrimate
+	//calculated distance to target
+	float decrement;
+	//to slow motors as aiming
+	
+
 public:
-	ironsInTheFire(void)://Vriska reference and class name also
+	DoctaEight(void):
 		
-		pilot(1),//below are constructors and such
-		copilot(2),//pilot and copilot are in USB ports (adjustable via driverstation)
+		//constructs
 		
-		lefty(1),//here until  V
+		pilot(1),
+		copilot(2),
+		//controller(USB port)
+		lefty(1),
 		righty(2),
 		arm(3),
 		leftyB(4),
@@ -39,22 +79,25 @@ public:
 		intake(6),
 		lift(7),
 		LTop(8),
-		LBot(9),//HERE are jags that need to be in the order in which they are plugged in
-		
-		LTopEnc(1,2),//encoders -- 2 channels each;  add drive encoders -- 2 or 4?
+		LBot(9),
+		//jag(CANjag number)
+		LTopEnc(1,2),
 		LBotEnc(3,4)
-	
+		//encoders(AChannel, BChannel)
 		{
-			fPS = 6;//later will change in loop depending on factors explained above
-			camera.WriteMaxFPS(fPS);//needs to be called after above
+			camera.WriteMaxFPS(6);
+			//FPS
 			camera.WriteBrightness(0);
-			camera.WriteWhiteBalance(AxisCamera::kWhiteBalance_Automatic);//best for now; redo at comp
-			camera.WriteResolution(AxisCamera::kResolution_320x240);//higher = more accurate but slower
+			//
+			camera.WriteWhiteBalance(AxisCamera::kWhiteBalance_Automatic);
+			//white balance can be automatic or other
+			camera.WriteResolution(AxisCamera::kResolution_320x240);
+			//resolution
+
+			decrement = 1;
+			negate=1;
 			
-			decrement = 1;//value to slow jags when firing
-			negate=1;//changes orrientation of drive
-			
-			lefty.ChangeControlMode(CANJaguar::kPercentVbus);//constructs canJags
+			lefty.ChangeControlMode(CANJaguar::kPercentVbus);
 			righty.ChangeControlMode(CANJaguar::kPercentVbus);
 			leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
 			rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
@@ -62,37 +105,54 @@ public:
 			lift.ChangeControlMode(CANJaguar::kPercentVbus);
 			LTop.ChangeControlMode(CANJaguar::kPercentVbus);
 			LBot.ChangeControlMode(CANJaguar::kPercentVbus);
+			//CANJags currently % (-1 to 1)
 			
-			LTopEnc.Reset();//set encoder to 0
+			LTopEnc.Reset();
 			LBotEnc.Reset();
-			LTopEnc.Start();//start encoder
+			//reset encoders
+			LTopEnc.Start();
 			LBotEnc.Start();
-			//add drive encoders
+			//start encoders
 		}
 	
-	void DOGP(void)//%reference
+	
+	
+	void aim(void)//to aim
 	{
-		camera.GetImage(&image);//gets image from cam
-		BinaryImage* binImg = image.ThresholdRGB(192, 256, 192, 156, 192, 256);//make binary image; set param
-																				//for target
+		camera.GetImage(&image);
+		//gets image from cam
+		binImg = image.ThresholdRGB(192, 256, 192, 156, 192, 256);
+		//HSL values (MUST BE FOUND BY EXPERIMENT)
 		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
-								//a particle is a target
-								//reports return 'scores'
+		//finds targets
 		
-		//with cam, set distance still to do
 		
-		//
-		for(UINT32 x = 0; x < particles->size() /*and right or left jags movin(check via encoders)*/; x++)
+		cout << "Number of targets: ";
+		//output number of targets
+		
+		for(UINT32 x = 0; x < particles->size(); x++)
 		{//goes acrossed particle
 			
 			ParticleAnalysisReport& par = (*particles)[x];
 			
-			if (par.center_mass_x_normalized > -.3  && par.center_mass_x_normalized < .3)//particle is a double
+			/*
+			 * return stuff
+			 * 
+			par.imageHeight;
+			par.particleArea;
+			par.center_mass_y_normalized;
+			par.center_mass_x_normalized;
+			par.imageWidth;
+			*/
+			
+			if (par.center_mass_x_normalized > -.3  && par.center_mass_x_normalized < .3)
 			{
-				decrement = par.center_mass_x_normalized*2;//so as near target slows down
+				decrement = par.center_mass_x_normalized*2;
 			}
 			else
 				decrement = 1;
+			//lower speed if aiming at target or set back to 1
+			
 			
 			if(par.center_mass_x_normalized > 0)//right; 
 			{
@@ -100,7 +160,7 @@ public:
 				rightyB.Set(0);
 				lefty.Set(decrement);
 				leftyB.Set(decrement);
-			}//find center
+			}
 			else if(par.center_mass_x_normalized < 0)//left
 			{
 				lefty.Set(0);
@@ -108,18 +168,20 @@ public:
 				righty.Set(decrement);
 				rightyB.Set(decrement);
 			}
-			if (copilot.GetRawButton(1))
-			{}//escape
+			//aim
+			
 		}
+		
+		//CALC DISTANCE HERE!!!!!!!!!!!!!!!!!!!!!!!!!
+		//SHOOT HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		
 	}
 	
-	void fireMuhLazer(void)//&reference
-	{
-		//move balls up  --  will require a wait
-		//turn off ltop and lbot and lift and intake
-	}
 	
-	void creep(void)//Vriska reference and drive system -- system similar to a car
+	
+	
+	
+	void drive(void)
 	{				
 		if (pilot.GetY() > 0 && pilot.GetX() >= 0)//forward right
 		{
@@ -158,47 +220,63 @@ public:
 		}
 	}
 	
+	
+	
+	
 	void Autonomous(void)
 	{
 		GetWatchdog().Kill();
 		while (IsAutonomous())
 		{
-			DOGP();//aim and shoot
-			fireMuhLazer();
+			aim();
+			//aim and shoot
 		}
 	}
+	
+	
+	
+	
 	void OperatorControl(void)
 	{
 		GetWatchdog().Kill();
 		while (IsOperatorControl())
 		{
-				
-			if (copilot.GetTop())//for moving platform arm
+			
+			
+			if (copilot.GetTop())
 				arm.Set(-1);
 			else if (copilot.GetTrigger())
 				arm.Set(1);
 			else
 				arm.Set(0);
+			//move arm
 			
-			if (copilot.GetRawButton(2))//aim and set jag power
+			
+			if (copilot.GetRawButton(2))
 			{
-				DOGP();//aim and shoot
-				fireMuhLazer();
+				aim();
+				//aim and shoot
 			}
-			else if (copilot.GetRawButton(3))
+			else
 				decrement = 1;
+			//if not aiming and shooting, return motor power
 			
-			intake.Set(copilot.GetTwist());//take in balls
+			
+			intake.Set(copilot.GetTwist());
+			//take the balls
 
-			if (pilot.GetRawButton(1)){negate *= -1;}//to reverse creep
-			decrement = 1;//because full power for driver when not auto aiming
-			creep();//drive system
+			
+			if (pilot.GetRawButton(1)){negate *= -1;}
+			//to reverse drive
+			
+			drive();//drive system
 			
 		}
-		LTopEnc.Stop();//stop encoders
+		LTopEnc.Stop();
 		LBotEnc.Stop();
-		//include drive encoders
+		//stops encoders
 	}
 };
 
-START_ROBOT_CLASS(ironsInTheFire);//called by driverstation
+START_ROBOT_CLASS(DoctaEight);
+//called by driverstation

@@ -1,0 +1,282 @@
+/*
+ *	Gage Ervin and Emmanuel Lopez		Team 1671 
+ */
+
+
+/*
+ * COPILOT CONTROL
+ * 2 to turn and shoot
+ * trigers will move arm
+ * intake is right thumbstick
+ * 
+ * PILOT
+ * car drive, but turns full forward/back at extreme
+ * 1 will switch drive
+ *
+ *
+ * determine lighting values
+ *
+ * launch enc for speed ratio
+ * 
+ * use cams to find distance
+ *
+ * make warning if out of range
+ *
+ * dashboard data examples
+ * 
+ * fix number of targets output && pick target
+*/
+
+
+#include <iostream>
+//for consol IO
+#include "WPILib.h"
+//duh
+#include "nivision.h"
+//for cams
+
+#define IO (DriverStation::GetInstance()->GetEnhancedIO())
+//IO from driver station
+AxisCamera &camera = AxisCamera::GetInstance();
+//output from cameras to driverstation (so we can see it)
+ColorImage image(IMAQ_IMAGE_RGB);
+//create an image to buffer pics
+
+class DoctaEight : public SimpleRobot
+{
+	//declarations
+	
+	BinaryImage* binImg;
+	//make image
+	
+	Encoder LTopEnc, LBotEnc;
+	//launch system encoders
+	Joystick pilot, copilot;
+	//
+	CANJaguar lefty, righty, leftyB, rightyB, intake, lift, LTop, LBot, arm;
+	//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
+	signed char negate;
+	//negate for turning drive
+	double distance;
+	//calculated distance to target
+	float decrement;
+	//to slow motors as aiming
+	
+
+public:
+	DoctaEight(void):
+		
+		//constructs
+		
+		pilot(1),
+		copilot(2),
+		//controller(USB port)
+		lefty(1),
+		righty(2),
+		arm(3),
+		leftyB(4),
+		rightyB(5),
+		intake(6),
+		lift(7),
+		LTop(8),
+		LBot(9),
+		//jag(CANjag number)
+		LTopEnc(1,2),
+		LBotEnc(3,4)
+		//encoders(AChannel, BChannel)
+		{
+			camera.WriteMaxFPS(6);
+			//FPS
+			camera.WriteBrightness(0);
+			//
+			camera.WriteWhiteBalance(AxisCamera::kWhiteBalance_Automatic);
+			//white balance can be automatic or other
+			camera.WriteResolution(AxisCamera::kResolution_320x240);
+			//resolution
+
+			decrement = 1;
+			negate=1;
+			
+			lefty.ChangeControlMode(CANJaguar::kPercentVbus);
+			righty.ChangeControlMode(CANJaguar::kPercentVbus);
+			leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
+			rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
+			intake.ChangeControlMode(CANJaguar::kPercentVbus);
+			lift.ChangeControlMode(CANJaguar::kPercentVbus);
+			LTop.ChangeControlMode(CANJaguar::kPercentVbus);
+			LBot.ChangeControlMode(CANJaguar::kPercentVbus);
+			//CANJags currently % (-1 to 1)
+			
+			LTopEnc.Reset();
+			LBotEnc.Reset();
+			//reset encoders
+			LTopEnc.Start();
+			LBotEnc.Start();
+			//start encoders
+		}
+	
+	
+	
+	void aim(void)//to aim
+	{
+		camera.GetImage(&image);
+		//gets image from cam
+		binImg = image.ThresholdRGB(192, 256, 192, 156, 192, 256);
+		//HSL values (MUST BE FOUND BY EXPERIMENT)
+		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
+		//finds targets
+		
+		
+		cout << "Number of targets: ";
+		//output number of targets
+		
+		for(UINT32 x = 0; x < particles->size(); x++)
+		{//goes acrossed particle
+			
+			ParticleAnalysisReport& par = (*particles)[x];
+			
+			/*
+			 * return stuff
+			 * 
+			par.imageHeight;
+			par.particleArea;
+			par.center_mass_y_normalized;
+			par.center_mass_x_normalized;
+			par.imageWidth;
+			*/
+			
+			if (par.center_mass_x_normalized > -.3  && par.center_mass_x_normalized < .3)
+			{
+				decrement = par.center_mass_x_normalized*2;
+			}
+			else
+				decrement = 1;
+			//lower speed if aiming at target or set back to 1
+			
+			
+			if(par.center_mass_x_normalized > 0)//right; 
+			{
+				righty.Set(0);
+				rightyB.Set(0);
+				lefty.Set(decrement);
+				leftyB.Set(decrement);
+			}
+			else if(par.center_mass_x_normalized < 0)//left
+			{
+				lefty.Set(0);
+				leftyB.Set(0);
+				righty.Set(decrement);
+				rightyB.Set(decrement);
+			}
+			//aim
+			
+		}
+		
+		//CALC DISTANCE HERE!!!!!!!!!!!!!!!!!!!!!!!!!
+		//SHOOT HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		
+	}
+	
+	
+	
+	
+	
+	void drive(void)
+	{				
+		if (pilot.GetY() > 0 && pilot.GetX() >= 0)//forward right
+		{
+			lefty.Set(pilot.GetY() * negate * decrement);//left motors full
+			leftyB.Set(pilot.GetY() * negate * decrement);//left motors full
+			righty.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate * decrement);//right motors full dec by twiceX abs X
+			rightyB.Set(( pilot.GetY() - pilot.GetX() * 2 ) * negate * decrement);
+		}//(so up to x = 0 right rev and when y negative, backward curve)
+		else if (pilot.GetY() < 0 && pilot.GetX() > 0)//backward left
+		{
+			righty.Set(pilot.GetY() * negate * -1 * decrement);
+			rightyB.Set(pilot.GetY() * negate * -1 * decrement);
+			lefty.Set((pilot.GetY() - pilot.GetX() * 2) * negate * decrement);
+			leftyB.Set((pilot.GetY() - pilot.GetX() * 2) * negate * decrement);
+		}
+		else if (pilot.GetY() > 0 && pilot.GetX() <= 0)//forward left
+		{
+			righty.Set(pilot.GetY() * negate * decrement);
+			rightyB.Set(pilot.GetY() * negate * decrement);
+			lefty.Set((pilot.GetX() * 2 + pilot.GetY()) * negate * decrement);
+			leftyB.Set((pilot.GetX() * 2 + pilot.GetY()) * negate * decrement);
+		}
+		else if (pilot.GetY() < 0 && pilot.GetX() < 0)//back right
+		{
+			lefty.Set(pilot.GetY() * negate * -1 * decrement);//left full back
+			leftyB.Set(pilot.GetY() * negate * -1 * decrement);//left full back
+			righty.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate * decrement);//right morots full dec by twice abs X
+			rightyB.Set(( pilot.GetY() + pilot.GetX() * 2 ) * negate * decrement);
+		}
+		else
+		{
+			righty.Set(pilot.GetY() *negate * decrement);
+			rightyB.Set(pilot.GetY() *negate * decrement);
+			lefty.Set(pilot.GetY() *negate * decrement);
+			leftyB.Set(pilot.GetY() *negate * decrement);
+		}
+	}
+	
+	
+	
+	
+	void Autonomous(void)
+	{
+		GetWatchdog().Kill();
+		while (IsAutonomous())
+		{
+			aim();
+			//aim and shoot
+		}
+	}
+	
+	
+	
+	
+	void OperatorControl(void)
+	{
+		GetWatchdog().Kill();
+		while (IsOperatorControl())
+		{
+			
+			
+			if (copilot.GetTop())
+				arm.Set(-1);
+			else if (copilot.GetTrigger())
+				arm.Set(1);
+			else
+				arm.Set(0);
+			//move arm
+			
+			
+			if (copilot.GetRawButton(2))
+			{
+				aim();
+				//aim and shoot
+			}
+			else
+				decrement = 1;
+			//if not aiming and shooting, return motor power
+			
+			
+			intake.Set(copilot.GetTwist());
+			//take the balls
+
+			
+			if (pilot.GetRawButton(1)){negate *= -1;}
+			//to reverse drive
+			
+			drive();//drive system
+			
+		}
+		LTopEnc.Stop();
+		LBotEnc.Stop();
+		//stops encoders
+	}
+};
+
+START_ROBOT_CLASS(DoctaEight);
+//called by driverstation

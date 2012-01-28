@@ -218,9 +218,6 @@ public:
 		//above aims
 	}
 	
-	
-	
-	
 	void shoot(void)
 	{
 		camera.GetImage(&image);
@@ -239,9 +236,6 @@ public:
 			
 		//SHOOT HERE!
 	}
-	
-	
-	
 	
 	void drive(void)
 	{				
@@ -282,9 +276,21 @@ public:
 		}
 	}
 	
-	
-	
-	
+	void Rainbowdash(void)//works like c code braces
+	{
+		Dashboard &rainbow = DriverStation::GetInstance()->GetHighPriorityDashboardPacker();
+		rainbow.AddCluster();
+			rainbow.AddDouble(firstTarget);
+			rainbow.AddDouble(secondTarget);
+			rainbow.AddDouble(thirdTarget);
+		rainbow.FinalizeCluster();
+		rainbow.AddCluster();
+			rainbow.AddDouble(distance);
+			rainbow.AddFloat(decrement);
+		rainbow.FinalizeCluster();
+		rainbow.Finalize();
+	}
+
 	void Autonomous(void)
 	{
 		GetWatchdog().Kill();
@@ -295,9 +301,6 @@ public:
 			//aim and shoot
 		}
 	}
-	
-	
-	
 	
 	void OperatorControl(void)
 	{

@@ -28,7 +28,6 @@
  *
  * dashboard data examples
  * 
- * ?>
 */
 
 
@@ -230,9 +229,8 @@ public:
 		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
 		//finds targets
 		
-		ParticleAnalysisReport& par = (*particles)[choiceTarget];
+		ParticleAnalysisReport& par = (*particles)[distanceTarget];
 		
-		//make below find from bottom target instead of choice if below top target  ?>
 		distance = 9//half height of target in inches over target to get adjacent
 						/tan(//tan of this to get opposite over adjacent
 								54*//angle of lens vision

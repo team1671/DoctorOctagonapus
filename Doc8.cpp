@@ -174,18 +174,17 @@ public:
 	void aim(void)
 	{
 		targetSelect();
-		camera.GetImage(&image);
-		//gets image from cam
-		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
-		//finds targets
 		
-		
-		cout << "Number of targets: " << particles->size();
-		//output number of targets
 		
 		//find what point motors stop then this should be slightly above
 		while (/*decrement > .2 or decrement < -.2 && */ copilot.GetRawButton(1))
 		{
+			
+			
+			camera.GetImage(&image);
+			//gets image from cam
+			vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
+			//finds targets
 			cout << "Number of targets: " << particles->size();
 			//output number of targets
 			

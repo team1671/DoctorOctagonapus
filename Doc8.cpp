@@ -25,8 +25,6 @@
  * launch enc for speed ratio
  *
  * make warning if out of range
- *
- * dashboard data examples
  * 
 */
 
@@ -37,7 +35,7 @@
 //duh
 #include "nivision.h"
 //for cams
-#include "math.h"
+#include "cmath"
 
 #define IO (DriverStation::GetInstance()->GetEnhancedIO())
 //IO from driver station
@@ -63,10 +61,8 @@ class DoctaEight : public SimpleRobot
 	//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
 	signed char negate, choiceTarget, distanceTarget;
 	//negate for turning drive
-	double distance, firstTarget, secondTarget, thirdTarget;
-	//calculated distance to target
-	float decrement;
-	//to slow motors as aiming
+	double distance, firstTarget, secondTarget, thirdTarget, decrement;
+	//calculated distance to target, to slow motors as aiming
 	
 public:
 	DoctaEight(void):
@@ -180,6 +176,8 @@ public:
 		while (/*decrement > .2 or decrement < -.2 && */ copilot.GetRawButton(1))
 		{
 			
+
+			RainbowDash();
 			
 			camera.GetImage(&image);
 			//gets image from cam
@@ -218,6 +216,9 @@ public:
 		//above aims
 	}
 	
+	
+	
+	
 	void shoot(void)
 	{
 		camera.GetImage(&image);
@@ -236,6 +237,9 @@ public:
 			
 		//SHOOT HERE!
 	}
+	
+	
+	
 	
 	void drive(void)
 	{				
@@ -276,21 +280,26 @@ public:
 		}
 	}
 	
-	void Rainbowdash(void)//works like c code braces
+	
+	
+	void RainbowDash(void)//pony works like c code braces, like this rainbow.Add<Typegoeshere>(variable)
 	{
 		Dashboard &rainbow = DriverStation::GetInstance()->GetHighPriorityDashboardPacker();
-		rainbow.AddCluster();
+		rainbow.AddCluster();						//displays the target nubmers
 			rainbow.AddDouble(firstTarget);
 			rainbow.AddDouble(secondTarget);
 			rainbow.AddDouble(thirdTarget);
 		rainbow.FinalizeCluster();
-		rainbow.AddCluster();
-			rainbow.AddDouble(distance);
-			rainbow.AddFloat(decrement);
+		rainbow.AddCluster();						/////displays the distance from the target, and
+			rainbow.AddDouble(distance);			//and the diffrence number for angling
+			rainbow.AddDouble(decrement);
 		rainbow.FinalizeCluster();
-		rainbow.Finalize();
+		rainbow.Finalize();//need this for the ending
 	}
-
+	
+	
+	
+	
 	void Autonomous(void)
 	{
 		GetWatchdog().Kill();
@@ -302,12 +311,15 @@ public:
 		}
 	}
 	
+	
+	
+	
 	void OperatorControl(void)
 	{
 		GetWatchdog().Kill();
 		while (IsOperatorControl())
 		{
-			
+			RainbowDash();
 			
 			if (copilot.GetTop())
 				arm.Set(-1);

@@ -32,6 +32,7 @@
 #include <iostream>
 //for console IO
 #include "WPILib.h"
+
 //duh
 #include "nivision.h"
 //for cams
@@ -88,14 +89,18 @@ public:
 		{
 			binImg = image.ThresholdRGB(192, 256, 192, 156, 192, 256);
 			//HSL values (MUST BE FOUND BY EXPERIMENT)
-			camera.WriteMaxFPS(6);
+			camera.WriteMaxFPS(30);
 			//FPS
-			camera.WriteBrightness(0);
+			camera.WriteBrightness(100);
 			//
-			camera.WriteWhiteBalance(AxisCamera::kWhiteBalance_Automatic);
-			//white balance can be automatic or other
+			camera.WriteWhiteBalance(AxisCamera::kWhiteBalance_Hold);
+			//white balance -- set manually via internet connection
 			camera.WriteResolution(AxisCamera::kResolution_320x240);
 			//resolution
+			camera.WriteColorLevel(10);
+			//low color
+			camera.WriteCompression(0);
+			//lower easier on CRIO and harder on cam
 
 			decrement=1;
 			negate=1;

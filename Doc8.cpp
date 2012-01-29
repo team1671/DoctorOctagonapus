@@ -45,6 +45,7 @@ AxisCamera &camera = AxisCamera::GetInstance();
 ColorImage image(IMAQ_IMAGE_RGB);
 //create an image to buffer pics
 
+#define CAMERAHEIGHT 80//inches
 
 class DoctaEight : public SimpleRobot
 {
@@ -285,8 +286,36 @@ public:
 		}
 	}
 	
-	
-	
+	double fofx(double x)
+	{
+		return atan((107.5-CAMERAHEIGHT)/x)+atan((CAMERAHEIGHT-31.5)/x);
+	}
+
+	double getdistance()
+	{
+		camera.GetImage(&image);
+		//gets image from cam
+		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
+		//finds targets
+		ParticleAnalysisReport& bottom = (*particles)[distanceTarget];
+		ParticleAnalysisReport& top = (*particles)[distanceTarget];
+		
+		double weirdtheta=top.center_mass_y_normalized-bottom.center_mass_y_normalized;//finds the distance between the top target and the bottom target
+		double theta=weirdtheta/240;//the distance is turned into an angle (refer to fofx(x))
+		//107.5 is top target height 31.5 is bottom target height
+		double accuracy=1;
+		double aproximation=0;
+		double dotbinary=54;
+		while((accuracy<1)||(accuracy>-1))//binary approximation algorithm (the inverse is hell, don't find it.)
+		{
+			dotbinary/=2;
+			if(fofx(aproximation+dotbinary)>theta)
+				aproximation+=dotbinary;
+			accuracy=theta-fofx(aproximation);
+		}
+		return aproximation;
+	}
+		
 	void RainbowDash(void)//pony works like c code braces, like this rainbow.Add<Typegoeshere>(variable)
 	{
 		Dashboard &rainbow = DriverStation::GetInstance()->GetHighPriorityDashboardPacker();

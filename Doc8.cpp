@@ -40,12 +40,12 @@
 
 #define IO (DriverStation::GetInstance()->GetEnhancedIO())
 //IO from driver station
+#define CAMERAHEIGHT 80//inches
 AxisCamera &camera = AxisCamera::GetInstance();
 //output from cameras to driverstation (so we can see it)
 ColorImage image(IMAQ_IMAGE_RGB);
 //create an image to buffer pics
 
-#define CAMERAHEIGHT 80//inches
 
 class DoctaEight : public SimpleRobot
 {
@@ -88,7 +88,7 @@ public:
 		LBotEnc(3,4)
 		//encoders(AChannel, BChannel)
 		{
-			binImg = image.ThresholdRGB(192, 256, 192, 156, 192, 256);
+			binImg = image.ThresholdHSL(120, 250, 0, 30, 130, 230);
 			//HSL values (MUST BE FOUND BY EXPERIMENT)
 			camera.WriteMaxFPS(30);
 			//FPS
@@ -124,8 +124,7 @@ public:
 			//start encoders
 		}
 	
-	//selects target
-	void targetSelect(void)
+	void targetSelect(void)//selects target
 	{
 		camera.GetImage(&image);
 		//gets image from cam
@@ -177,7 +176,6 @@ public:
 	{
 		targetSelect();
 		
-		
 		//find what point motors stop then this should be slightly above
 		while (/*decrement > .2 or decrement < -.2 && */ copilot.GetRawButton(1))
 		{
@@ -222,8 +220,37 @@ public:
 		//above aims
 	}
 	
+	double fOfX(double x)
+	{
+		return 	(atan((107.5-CAMERAHEIGHT)/(x)) //angle from top triangle (triangle formed by camera target and line at camera's height)
+					+atan((CAMERAHEIGHT-31.5)/(x))); //angle from bottom triangle
+	}
 	
-	
+	double getDistance()//this distance is calculated using both the top and bottom targets is like 
+	{
+		camera.GetImage(&image);
+		//gets image from cam
+		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
+		//finds targets
+		ParticleAnalysisReport& bottom = (*particles)[distanceTarget];//bottom target
+		ParticleAnalysisReport& top = (*particles)[choiceTarget];//top target 
+		
+		double theta=(top.center_mass_y_normalized-bottom.center_mass_y_normalized)/240*54;//the distance is turned into an angle (refer to fofx(x))
+		//107.5 is top target height 31.5 is bottom target height
+		
+		double accuracy=1;
+		double aproximation=0;
+		double dotbinary=54;
+		while((accuracy<1)||(accuracy>-1))//binary approximation-> guesses using 1/2 distances until tlar -- function too complex
+		{
+			dotbinary/=2; //this is the number which modifies the approximation
+			if(fOfX(aproximation+dotbinary)>theta) //if the value to be added overshoots it does not add
+				aproximation+=dotbinary;
+			
+			accuracy=theta-fOfX(aproximation);
+		}
+		return aproximation;
+	}
 	
 	void shoot(void)
 	{
@@ -234,12 +261,18 @@ public:
 		
 		ParticleAnalysisReport& par = (*particles)[distanceTarget];
 		
+		/*
 		distance = 9//half height of target in inches over target to get adjacent
 						/tan(//tan of this to get opposite over adjacent
-								54*//angle of lens vision
+								54*//*/angle of lens vision
 									((par.particleArea/24)//to get height in pixels
 										/par.imageHeight)//above divided to get ratio of size
 											/2);//to get half of angle and therefore right triangle
+		*/
+		
+		getDistance();
+		
+		//use approximation instead of distance
 			
 		//SHOOT HERE!
 	}
@@ -286,36 +319,8 @@ public:
 		}
 	}
 	
-	double fofx(double x)
-	{
-		return atan((107.5-CAMERAHEIGHT)/x)+atan((CAMERAHEIGHT-31.5)/x);
-	}
-
-	double getdistance()
-	{
-		camera.GetImage(&image);
-		//gets image from cam
-		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
-		//finds targets
-		ParticleAnalysisReport& bottom = (*particles)[distanceTarget];
-		ParticleAnalysisReport& top = (*particles)[distanceTarget];
-		
-		double weirdtheta=top.center_mass_y_normalized-bottom.center_mass_y_normalized;//finds the distance between the top target and the bottom target
-		double theta=weirdtheta/240;//the distance is turned into an angle (refer to fofx(x))
-		//107.5 is top target height 31.5 is bottom target height
-		double accuracy=1;
-		double aproximation=0;
-		double dotbinary=54;
-		while((accuracy<1)||(accuracy>-1))//binary approximation algorithm (the inverse is hell, don't find it.)
-		{
-			dotbinary/=2;
-			if(fofx(aproximation+dotbinary)>theta)
-				aproximation+=dotbinary;
-			accuracy=theta-fofx(aproximation);
-		}
-		return aproximation;
-	}
-		
+	
+	
 	void RainbowDash(void)//pony works like c code braces, like this rainbow.Add<Typegoeshere>(variable)
 	{
 		Dashboard &rainbow = DriverStation::GetInstance()->GetHighPriorityDashboardPacker();

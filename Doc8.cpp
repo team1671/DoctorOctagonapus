@@ -38,8 +38,9 @@
 //for cams
 #include "cmath"
 
-//#define IO (DriverStation::GetInstance()->GetEnhancedIO())
+#define IO (DriverStation::GetInstance()->GetEnhancedIO())
 //IO from driver station
+
 #define CAMERAHEIGHT 80//inches
 
 AxisCamera &camera = AxisCamera::GetInstance();
@@ -68,6 +69,7 @@ class DoctaEight : public SimpleRobot
 	//calculated distance to target, to slow motors as aiming
 
 	bool limitedDistance;
+	//switch between primary and secondary distance tracking based on number of targets
 	
 public:
 	DoctaEight(void):
@@ -138,6 +140,15 @@ public:
 		
 		cout << "Number of targets: " << particles->size();
 
+		/*
+		 * below -- first, if at least three targets, use accurate distance tracking
+		 * second, if only two targets visible, track for higher one
+		 * third, if one target, track it
+		 * 
+		 * note: this is for distance tracking only; if far enough away, all targets will be visible after
+		 * aim() is called
+		 */
+		
 		if (3 <= particles->size())
 		{
 			ParticleAnalysisReport& par = (*particles)[1];
@@ -175,7 +186,9 @@ public:
 				distanceTarget = 3;
 			}
 			else {distanceTarget = 4;}
+			
 			limitedDistance = 0;
+		
 		}
 		else if (2 == particles->size())
 		{
@@ -198,32 +211,38 @@ public:
 			choiceTarget = 1;
 			limitedDistance = 1;
 		}
-		
-		//above chooses target to get range by - lowest target
 	}
 	//above selects target
 	
 	void aim(void)
 	{
 		choiceTarget = 7;
+		//default
 		targetSelect();
+		//if targetSelect finds a target, below will happen
 		
 		//find what point motors stop then this should be slightly above
 		while (/*decrement > .2 or decrement < -.2 && */ copilot.GetRawButton(1) && choiceTarget != 7)
 		{
-			
+
+			targetSelect();
+			//select target to shoot at-- will potentially change in while because turning may reveal better
+			//targets
 
 			RainbowDash();
+			//output dashboard values
 			
 			camera.GetImage(&image);
 			//gets image from cam
 			vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
 			//finds targets
-			cout << "Number of targets: " << particles->size();
-			//output number of targets
-			
 			ParticleAnalysisReport& par = (*particles)[choiceTarget];
 			//get report on target
+			cout << "Number of targets: " << particles->size() << "\nTarget selected: " << choiceTarget
+					<< "/nTurning to target-(0 is directly on)" << par.center_mass_x_normalized;
+			//output number of targets
+			
+			Wait(.005f);//motor uptade time
 			
 			if (par.center_mass_x_normalized > -.3  && par.center_mass_x_normalized < .3)
 			{
@@ -258,12 +277,10 @@ public:
 					+atan((CAMERAHEIGHT-31.5)/(x))); //angle from bottom triangle
 	}
 	
-	double getDistance()//this distance is calculated using both the top and bottom targets is like 
+	double getDistance()
 	{
 		camera.GetImage(&image);
-		//gets image from cam
 		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
-		//finds targets
 		
 		double aproximation=0;
 		
@@ -304,8 +321,8 @@ public:
 	{
 		
 		getDistance();
+		//if 0, too close to see target-- set jags low
 		
-		//use approximation instead of distance
 			
 		//SHOOT HERE!
 	}
@@ -391,7 +408,7 @@ public:
 		GetWatchdog().Kill();
 		while (IsOperatorControl())
 		{
-			//RainbowDash();
+			RainbowDash();
 			
 			if (copilot.GetTop())
 				arm.Set(-1);

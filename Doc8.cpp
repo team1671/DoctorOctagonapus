@@ -38,9 +38,10 @@
 //for cams
 #include "cmath"
 
-#define IO (DriverStation::GetInstance()->GetEnhancedIO())
+//#define IO (DriverStation::GetInstance()->GetEnhancedIO())
 //IO from driver station
 #define CAMERAHEIGHT 80//inches
+
 AxisCamera &camera = AxisCamera::GetInstance();
 //output from cameras to driverstation (so we can see it)
 ColorImage image(IMAQ_IMAGE_RGB);
@@ -63,8 +64,10 @@ class DoctaEight : public SimpleRobot
 	//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
 	signed char negate, choiceTarget, distanceTarget;
 	//negate for turning drive
-	double distance, firstTarget, secondTarget, thirdTarget, decrement;
+	double firstTarget, secondTarget, thirdTarget, decrement;
 	//calculated distance to target, to slow motors as aiming
+
+	bool limitedDistance;
 	
 public:
 	DoctaEight(void):
@@ -103,6 +106,8 @@ public:
 			camera.WriteCompression(0);
 			//lower easier on CRIO and harder on cam
 
+
+			limitedDistance = 0;
 			decrement=1;
 			negate=1;
 			
@@ -131,42 +136,68 @@ public:
 		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
 		//finds targets
 		
+		cout << "Number of targets: " << particles->size();
 
-		ParticleAnalysisReport& par = (*particles)[1];
-		firstTarget = par.center_mass_y;
-		par = (*particles)[2];
-		secondTarget = par.center_mass_y;
-		par = (*particles)[3];
-		thirdTarget = par.center_mass_y;
-		
-		if (firstTarget > secondTarget && firstTarget > thirdTarget)
+		if (3 <= particles->size())
+		{
+			ParticleAnalysisReport& par = (*particles)[1];
+			firstTarget = par.center_mass_y;
+			par = (*particles)[2];
+			secondTarget = par.center_mass_y;
+			par = (*particles)[3];
+			thirdTarget = par.center_mass_y;
+			
+			if (firstTarget > secondTarget && firstTarget > thirdTarget)
+			{
+				choiceTarget = 1;
+			}
+			else if (secondTarget > thirdTarget && secondTarget > firstTarget)
+			{
+				choiceTarget = 2;
+			}
+			else if (thirdTarget > secondTarget && thirdTarget > firstTarget)
+			{
+				choiceTarget = 3;
+			}
+			else {choiceTarget = 4;}
+			//above chooses target to shoot at - highest target
+			
+			if (firstTarget < secondTarget && firstTarget < thirdTarget)
+			{
+				distanceTarget = 1;
+			}
+			else if (secondTarget < thirdTarget && secondTarget < firstTarget)
+			{
+				distanceTarget = 2;
+			}
+			else if (thirdTarget < secondTarget && thirdTarget < firstTarget)
+			{
+				distanceTarget = 3;
+			}
+			else {distanceTarget = 4;}
+			limitedDistance = 0;
+		}
+		else if (2 == particles->size())
+		{
+			ParticleAnalysisReport& par = (*particles)[1];
+			firstTarget = par.center_mass_y;
+			par = (*particles)[2];
+			secondTarget = par.center_mass_y;
+			if (firstTarget > secondTarget)
+			{
+				choiceTarget = 1;
+			}
+			else
+			{
+				choiceTarget = 2;
+			}
+			limitedDistance = 1;
+		}
+		else if (1 == particles->size())
 		{
 			choiceTarget = 1;
+			limitedDistance = 1;
 		}
-		else if (secondTarget > thirdTarget && secondTarget > firstTarget)
-		{
-			choiceTarget = 2;
-		}
-		else if (thirdTarget > secondTarget && thirdTarget > firstTarget)
-		{
-			choiceTarget = 3;
-		}
-		else {choiceTarget = 4;}
-		//above chooses target to shoot at - highest target
-		
-		if (firstTarget < secondTarget && firstTarget < thirdTarget)
-		{
-			distanceTarget = 1;
-		}
-		else if (secondTarget < thirdTarget && secondTarget < firstTarget)
-		{
-			distanceTarget = 2;
-		}
-		else if (thirdTarget < secondTarget && thirdTarget < firstTarget)
-		{
-			distanceTarget = 3;
-		}
-		else {distanceTarget = 4;}
 		
 		//above chooses target to get range by - lowest target
 	}
@@ -174,10 +205,11 @@ public:
 	
 	void aim(void)
 	{
+		choiceTarget = 7;
 		targetSelect();
 		
 		//find what point motors stop then this should be slightly above
-		while (/*decrement > .2 or decrement < -.2 && */ copilot.GetRawButton(1))
+		while (/*decrement > .2 or decrement < -.2 && */ copilot.GetRawButton(1) && choiceTarget != 7)
 		{
 			
 
@@ -232,43 +264,44 @@ public:
 		//gets image from cam
 		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
 		//finds targets
-		ParticleAnalysisReport& bottom = (*particles)[distanceTarget];//bottom target
-		ParticleAnalysisReport& top = (*particles)[choiceTarget];//top target 
 		
-		double theta=(top.center_mass_y_normalized-bottom.center_mass_y_normalized)/240*54;//the distance is turned into an angle (refer to fofx(x))
-		//107.5 is top target height 31.5 is bottom target height
-		
-		double accuracy=1;
 		double aproximation=0;
-		double dotbinary=54;
-		while((accuracy<1)||(accuracy>-1))//binary approximation-> guesses using 1/2 distances until tlar -- function too complex
+		
+		if (limitedDistance == 1)
 		{
-			dotbinary/=2; //this is the number which modifies the approximation
-			if(fOfX(aproximation+dotbinary)>theta) //if the value to be added overshoots it does not add
-				aproximation+=dotbinary;
+			ParticleAnalysisReport& par = (*particles)[distanceTarget];
 			
-			accuracy=theta-fOfX(aproximation);
+			aproximation = 9//half height of target in inches over target to get adjacent
+							/tan(//tan of this to get opposite over adjacent
+									54*//angle of lens vision
+										((par.particleArea/24)//to get height in pixels
+											/par.imageHeight)//above divided to get ratio of size
+												/2);//to get half of angle and therefore right triangle
+		}
+		else
+		{
+			ParticleAnalysisReport& bottom = (*particles)[distanceTarget];//bottom target
+			ParticleAnalysisReport& top = (*particles)[choiceTarget];//top target 
+			
+			double theta=(top.center_mass_y_normalized-bottom.center_mass_y_normalized)/240*54;//the distance is turned into an angle (refer to fofx(x))
+			//107.5 is top target height 31.5 is bottom target height
+			
+			double accuracy=1;
+			double dotbinary=54;
+			while((accuracy<1)||(accuracy>-1))//binary approximation-> guesses using 1/2 distances until tlar -- function too complex
+			{
+				dotbinary/=2; //this is the number which modifies the approximation
+				if(fOfX(aproximation+dotbinary)>theta) //if the value to be added overshoots it does not add
+					aproximation+=dotbinary;
+				
+				accuracy=theta-fOfX(aproximation);
+			}
 		}
 		return aproximation;
 	}
 	
 	void shoot(void)
 	{
-		camera.GetImage(&image);
-		//gets image from cam
-		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
-		//finds targets
-		
-		ParticleAnalysisReport& par = (*particles)[distanceTarget];
-		
-		/*
-		distance = 9//half height of target in inches over target to get adjacent
-						/tan(//tan of this to get opposite over adjacent
-								54*//*/angle of lens vision
-									((par.particleArea/24)//to get height in pixels
-										/par.imageHeight)//above divided to get ratio of size
-											/2);//to get half of angle and therefore right triangle
-		*/
 		
 		getDistance();
 		
@@ -330,7 +363,7 @@ public:
 			rainbow.AddDouble(thirdTarget);
 		rainbow.FinalizeCluster();
 		rainbow.AddCluster();						/////displays the distance from the target, and
-			rainbow.AddDouble(distance);			//and the diffrence number for angling
+			rainbow.AddDouble(getDistance());			//and the diffrence number for angling
 			rainbow.AddDouble(decrement);
 		rainbow.FinalizeCluster();
 		rainbow.Finalize();//need this for the ending
@@ -358,7 +391,7 @@ public:
 		GetWatchdog().Kill();
 		while (IsOperatorControl())
 		{
-			RainbowDash();
+			//RainbowDash();
 			
 			if (copilot.GetTop())
 				arm.Set(-1);

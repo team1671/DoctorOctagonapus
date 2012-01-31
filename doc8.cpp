@@ -1,5 +1,5 @@
 /*
- *	Gage Ervin and Emmanuel Lopez		Team 1671 
+ *	Gage Ervin, Emmanuel Lopez, Aaron Ramadan, and	    Team 1671 
  *	what happened to the other 7?
  *	historical references: Vriska and Doctaoctagonapus
  */

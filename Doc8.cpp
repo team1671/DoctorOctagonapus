@@ -379,7 +379,7 @@ public:
 			rainbow.AddDouble(secondTarget);
 			rainbow.AddDouble(thirdTarget);
 		rainbow.FinalizeCluster();
-		rainbow.AddCluster();						/////displays the distance from the target, and
+		rainbow.AddCluster();						//displays the distance from the target, and
 			rainbow.AddDouble(getDistance());			//and the diffrence number for angling
 			rainbow.AddDouble(decrement);
 		rainbow.FinalizeCluster();

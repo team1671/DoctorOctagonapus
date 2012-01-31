@@ -1,5 +1,5 @@
 /*
- *	Gage Ervin, Emmanuel Lopez, Aaron Ramadan, and	    Team 1671 
+ *	Gage Ervin and Emmanuel Lopez		Team 1671 
  *	what happened to the other 7?
  *	historical references: Vriska and Doctaoctagonapus
  */
@@ -63,7 +63,7 @@ class DoctaEight : public SimpleRobot
 	//
 	CANJaguar lefty, righty, leftyB, rightyB, intake, lift, LTop, LBot, arm;
 	//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
-	signed char negate, choiceTarget, distanceTarget;
+	signed char negate, choiceTarget, distanceTarget, itt;
 	//negate for turning drive
 	double firstTarget, secondTarget, thirdTarget, decrement;
 	//calculated distance to target, to slow motors as aiming
@@ -138,8 +138,14 @@ public:
 		vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
 		//finds targets
 		
-		cout << "Number of targets: " << particles->size();
+		itt++;
+		if (itt%2500 == 0)
+		{
+			itt = 0;
+			cout << "Number of targets: " << particles->size();
+		}
 
+		
 		/*
 		 * below -- first, if at least three targets, use accurate distance tracking
 		 * second, if only two targets visible, track for higher one
@@ -222,14 +228,14 @@ public:
 		//if targetSelect finds a target, below will happen
 		
 		//find what point motors stop then this should be slightly above
-		while (/*decrement > .2 or decrement < -.2 && */ copilot.GetRawButton(1) && choiceTarget != 7)
+		while (decrement > .2 or decrement < -.2 && copilot.GetRawButton(1) && choiceTarget != 7)
 		{
 
 			targetSelect();
 			//select target to shoot at-- will potentially change in while because turning may reveal better
 			//targets
 
-			RainbowDash();
+			//RainbowDash();
 			//output dashboard values
 			
 			camera.GetImage(&image);
@@ -290,7 +296,7 @@ public:
 			
 			aproximation = 9//half height of target in inches over target to get adjacent
 							/tan(//tan of this to get opposite over adjacent
-									54* //angle of lens vision
+									54*//angle of lens vision
 										((par.particleArea/24)//to get height in pixels
 											/par.imageHeight)//above divided to get ratio of size
 												/2);//to get half of angle and therefore right triangle
@@ -379,7 +385,7 @@ public:
 			rainbow.AddDouble(secondTarget);
 			rainbow.AddDouble(thirdTarget);
 		rainbow.FinalizeCluster();
-		rainbow.AddCluster();						//displays the distance from the target, and
+		rainbow.AddCluster();						/////displays the distance from the target, and
 			rainbow.AddDouble(getDistance());			//and the diffrence number for angling
 			rainbow.AddDouble(decrement);
 		rainbow.FinalizeCluster();
@@ -408,7 +414,7 @@ public:
 		GetWatchdog().Kill();
 		while (IsOperatorControl())
 		{
-			RainbowDash();
+			//RainbowDash();
 			
 			if (copilot.GetTop())
 				arm.Set(-1);

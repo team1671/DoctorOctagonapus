@@ -2,7 +2,7 @@ X,Y   Z,Twist
 devices && pr
 
 
-consol
+console
 click on remote systems in bottom lef -> connect to IP ->target tools -> target consol
 
 diagnostics - click stop button yeah

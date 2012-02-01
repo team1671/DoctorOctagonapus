@@ -9,7 +9,7 @@ void DoctaEight::targetSelect(void)
 	if (itt%2500 == 0)
 	{
 		itt = 0;
-		cout << "Number of targets: " << particles->size();
+		cout << "Number of targets: " << particles->size() << endl;
 	}
 
 	
@@ -84,17 +84,14 @@ void DoctaEight::targetSelect(void)
 		choiceTarget = 1;
 		limitedDistance = 1;
 	}
+	else{choiceTarget = 7;}
+	
 }
 
 void DoctaEight::aim(void)
 {
-	choiceTarget = 7;
-	//default
-	targetSelect();
-	//if targetSelect finds a target, below will happen
-	
 	//find what point motors stop then this should be slightly above
-	while (decrement > .2 or decrement < -.2 && copilot.GetRawButton(1) && choiceTarget != 7)
+	while (decrement > .2 or decrement < -.2 and copilot.GetRawButton(1) and choiceTarget != 7)
 	{
 
 		targetSelect();
@@ -110,11 +107,15 @@ void DoctaEight::aim(void)
 		//finds targets
 		ParticleAnalysisReport& par = (*particles)[choiceTarget];
 		//get report on target
-		cout << "Number of targets: " << particles->size() << "\nTarget selected: " << choiceTarget
-				<< "/nTurning to target-(0 is directly on)" << par.center_mass_x_normalized;
+		itt++;
+		if (itt%2500 == 0)
+		{
+			itt = 0;
+			cout << "Number of targets: " << particles->size() << endl << "Target selected: " << choiceTarget
+				<< endl << "Zeroing in: " << par.center_mass_x_normalized;
+		}
 		//output number of targets
 		
-		Wait(.005f);//motor uptade time
 		
 		if (par.center_mass_x_normalized > -.3  && par.center_mass_x_normalized < .3)
 		{
@@ -139,6 +140,7 @@ void DoctaEight::aim(void)
 			righty.Set(decrement);
 			rightyB.Set(decrement);
 		}
+		Wait (.1f);//wait a sec- the longer, the more will travel before decriment is reset
 	}
-	//above aims
+	if (choiceTarget == 7){cout << "no target";}
 }

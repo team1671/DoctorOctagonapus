@@ -22,15 +22,15 @@ LBotEnc(3,4)
 	//HSL values (MUST BE FOUND BY EXPERIMENT)
 	camera.WriteMaxFPS(30);
 	//FPS
-	camera.WriteBrightness(100);
+	camera.WriteBrightness(30);
 	//
 	camera.WriteWhiteBalance(AxisCamera::kWhiteBalance_Hold);
-	//white balance -- set manually via internet connection
+	//white balance -- set manually via internet connection w/hold
 	camera.WriteResolution(AxisCamera::kResolution_320x240);
 	//resolution
-	camera.WriteColorLevel(10);
+	camera.WriteColorLevel(30);
 	//low color
-	camera.WriteCompression(0);
+	camera.WriteCompression(30);
 	//lower easier on CRIO and harder on cam
 
 

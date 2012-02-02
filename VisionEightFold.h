@@ -6,6 +6,7 @@ double DoctaEight::fOfX(double x)
 
 double DoctaEight::getDistance()
 {
+	cout << "Distance" << endl;
 	camera.GetImage(&image);
 	vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
 	
@@ -17,7 +18,7 @@ double DoctaEight::getDistance()
 		
 		aproximation = 9//half height of target in inches over target to get adjacent
 						/tan(//tan of this to get opposite over adjacent
-								54* //angle of lens vision
+								54*//angle of lens vision
 									((par.particleArea/24)//to get height in pixels
 										/par.imageHeight)//above divided to get ratio of size
 											/2);//to get half of angle and therefore right triangle
@@ -47,6 +48,7 @@ double DoctaEight::getDistance()
 
 void DoctaEight::shoot(void)
 {
+	cout << "shootin'" << endl;
 	
 	getDistance();
 	//if 0, too close to see target-- set jags low

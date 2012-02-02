@@ -5,15 +5,14 @@ DoctaEight::DoctaEight(void):
 pilot(1),
 copilot(2),
 //controller(USB port)
-lefty(1),
-righty(2),
-arm(3),
+lefty(2),
+righty(3),
 leftyB(4),
 rightyB(5),
-intake(6),
-lift(7),
-LTop(8),
-LBot(9),
+arm(9),
+intake(8),
+LTop(6),
+LBot(7),
 //jag(CANjag number)
 LTopEnc(1,2),
 LBotEnc(3,4)
@@ -44,7 +43,6 @@ LBotEnc(3,4)
 	leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
 	rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
 	intake.ChangeControlMode(CANJaguar::kPercentVbus);
-	lift.ChangeControlMode(CANJaguar::kPercentVbus);
 	LTop.ChangeControlMode(CANJaguar::kPercentVbus);
 	LBot.ChangeControlMode(CANJaguar::kPercentVbus);
 	//CANJags currently % (-1 to 1)

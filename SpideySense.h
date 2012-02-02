@@ -14,15 +14,14 @@ void DoctaEight::targetSelect(void)
 
 	
 	/*
-	 * below -- first, if at least three targets, use accurate distance tracking
+	 * below -- first, if at least three targets, use accurate distance tracking and track higher target
 	 * second, if only two targets visible, track for higher one
 	 * third, if one target, track it
 	 * 
-	 * note: this is for distance tracking only; if far enough away, all targets will be visible after
-	 * aim() is called
+	 * note: this is for distance tracking only; if far enough away, all targets will be visible after aim() is called
 	 */
 	
-	if (3 <= particles->size())
+	if (3 <= particles->size())//if 3 or 4 targets visible
 	{
 		ParticleAnalysisReport& par = (*particles)[1];
 		firstTarget = par.center_mass_y;
@@ -58,17 +57,21 @@ void DoctaEight::targetSelect(void)
 		{
 			distanceTarget = 3;
 		}
-		else {distanceTarget = 4;}
-		
-		limitedDistance = 0;
+		else 
+		{
+			distanceTarget = 4;
+		}
+
+		limitedDistance = 0;//because this is three targets, use accurate distance algorithm
 	
 	}
-	else if (2 == particles->size())
+	else if (2 == particles->size())//if 2 targets visible
 	{
 		ParticleAnalysisReport& par = (*particles)[1];
 		firstTarget = par.center_mass_y;
 		par = (*particles)[2];
 		secondTarget = par.center_mass_y;
+		
 		if (firstTarget > secondTarget)
 		{
 			choiceTarget = 1;
@@ -77,7 +80,9 @@ void DoctaEight::targetSelect(void)
 		{
 			choiceTarget = 2;
 		}
-		limitedDistance = 1;
+		
+		limitedDistance = 1;//use single target target tracking
+	
 	}
 	else if (1 == particles->size())
 	{
@@ -90,16 +95,14 @@ void DoctaEight::targetSelect(void)
 
 void DoctaEight::aim(void)
 {
+	cout << "AIM" << endl;
 	//find what point motors stop then this should be slightly above
-	while (decrement > .2 or decrement < -.2 and copilot.GetRawButton(1) and choiceTarget != 7)
+	while (decrement > .3 or decrement < -.3 and copilot.GetRawButton(1) and choiceTarget != 7)
 	{
 
 		targetSelect();
 		//select target to shoot at-- will potentially change in while because turning may reveal better
 		//targets
-
-		//RainbowDash();
-		//output dashboard values
 		
 		camera.GetImage(&image);
 		//gets image from cam
@@ -107,6 +110,10 @@ void DoctaEight::aim(void)
 		//finds targets
 		ParticleAnalysisReport& par = (*particles)[choiceTarget];
 		//get report on target
+
+		RainbowDash();
+		//output dashboard values
+		
 		itt++;
 		if (itt%2500 == 0)
 		{
@@ -126,21 +133,23 @@ void DoctaEight::aim(void)
 		//lower speed if aiming at target or set back to 1
 		
 		
-		if(par.center_mass_x_normalized > 0)//right; 
+		//decrement is for keeping drive from moving back and forth continuously
+		if(par.center_mass_x_normalized > 0)//turn right; 
 		{
 			righty.Set(0);
 			rightyB.Set(0);
 			lefty.Set(decrement);
 			leftyB.Set(decrement);
 		}
-		else if(par.center_mass_x_normalized < 0)//left
+		else if(par.center_mass_x_normalized < 0)//turn left
 		{
 			lefty.Set(0);
 			leftyB.Set(0);
 			righty.Set(decrement);
 			rightyB.Set(decrement);
 		}
-		Wait (.1f);//wait a sec- the longer, the more will travel before decriment is reset
+		
+		Wait (.005f);//wait a sec- the longer, the more will travel before decriment is reset
 	}
 	if (choiceTarget == 7){cout << "no target";}
 }

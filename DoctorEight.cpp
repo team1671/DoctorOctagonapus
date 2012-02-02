@@ -56,7 +56,7 @@ class DoctaEight : public SimpleRobot
 	Encoder LTopEnc, LBotEnc;//launch system encoders
 	Joystick pilot, copilot;
 	
-	CANJaguar lefty, righty, leftyB, rightyB, intake, lift, LTop, LBot, arm;//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
+	CANJaguar lefty, righty, leftyB, rightyB, intake, LTop, LBot, arm;//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
 	signed char negate, choiceTarget, distanceTarget, itt;//negate for turning drive
 	double firstTarget, secondTarget, thirdTarget, decrement;//calculated distance to target, to slow motors as aiming
 

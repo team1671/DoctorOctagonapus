@@ -46,8 +46,9 @@ AxisCamera &camera = AxisCamera::GetInstance();
 ColorImage image(IMAQ_IMAGE_RGB);
 //create an image to buffer pics
 
-class DoctaEight : public SimpleRobot
+class DoctaEight  
 {
+	public: SimpleRobot
 	BinaryImage* binImg;
 	//make image	
 	

@@ -1,5 +1,6 @@
 void DoctaEight::targetSelect(void)
 {
+	GetWatchdog().Kill();
 	camera.GetImage(&image);
 	//gets image from cam
 	vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
@@ -95,6 +96,7 @@ void DoctaEight::targetSelect(void)
 
 void DoctaEight::aim(void)
 {
+	GetWatchdog().Kill();
 	cout << "AIM" << endl;
 	//find what point motors stop then this should be slightly above
 	while (decrement > .3 or decrement < -.3 and copilot.GetRawButton(1) and choiceTarget != 7)
@@ -111,7 +113,7 @@ void DoctaEight::aim(void)
 		ParticleAnalysisReport& par = (*particles)[choiceTarget];
 		//get report on target
 
-		RainbowDash();
+		//RainbowDash();
 		//output dashboard values
 		
 		itt++;

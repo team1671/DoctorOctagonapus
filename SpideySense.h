@@ -6,10 +6,10 @@ void DoctaEight::targetSelect(void)
 	vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
 	//finds targets
 	
-	itt++;
-	if (itt%2500 == 0)
+	rep++;
+	if (rep%500 == 0)
 	{
-		itt = 0;
+		rep = 0;
 		cout << "Number of targets: " << particles->size() << endl;
 	}
 
@@ -97,10 +97,12 @@ void DoctaEight::targetSelect(void)
 void DoctaEight::aim(void)
 {
 	GetWatchdog().Kill();
+	targetSelect();
 	cout << "AIM" << endl;
 	//find what point motors stop then this should be slightly above
 	while (decrement > .3 or decrement < -.3 and copilot.GetRawButton(1) and choiceTarget != 7)
 	{
+		GetWatchdog().Kill();
 
 		targetSelect();
 		//select target to shoot at-- will potentially change in while because turning may reveal better
@@ -115,24 +117,23 @@ void DoctaEight::aim(void)
 
 		//RainbowDash();
 		//output dashboard values
-		
 		itt++;
-		if (itt%2500 == 0)
+		if (itt >= 5)
 		{
-			itt = 0;
 			cout << "Number of targets: " << particles->size() << endl << "Target selected: " << choiceTarget
-				<< endl << "Zeroing in: " << par.center_mass_x_normalized;
+						<< endl << "Zeroing in: " << par.center_mass_x_normalized;
+			itt = 0;
 		}
 		//output number of targets
 		
-		
-		if (par.center_mass_x_normalized > -.3  && par.center_mass_x_normalized < .3)
+//		DO  NOT INCLUDE THIS UNTIL AFTER WE HAVE PARTICLES OR ELSE WILL EXIT LOOP
+/*		if (par.center_mass_x_normalized > -.3  && par.center_mass_x_normalized < .3)
 		{
 			decrement = par.center_mass_x_normalized*2;
 		}
 		else
 			decrement = 1;
-		//lower speed if aiming at target or set back to 1
+*/		//lower speed if aiming at target or set back to 1
 		
 		
 		//decrement is for keeping drive from moving back and forth continuously

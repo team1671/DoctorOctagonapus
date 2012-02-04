@@ -1,11 +1,13 @@
 double DoctaEight::fOfX(double x)
 {
+	GetWatchdog().Kill();
 	return 	(atan((107.5-CAMERAHEIGHT)/(x)) //angle from top triangle (triangle formed by camera target and line at camera's height)
 			+atan((CAMERAHEIGHT-31.5)/(x))); //angle from bottom triangle
 }
 
 double DoctaEight::getDistance()
 {
+	GetWatchdog().Kill();
 	cout << "Distance" << endl;
 	camera.GetImage(&image);
 	vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
@@ -35,6 +37,7 @@ double DoctaEight::getDistance()
 		double dotbinary=54;
 		while((accuracy<1)||(accuracy>-1))//binary approximation-> guesses using 1/2 distances until tlar -- function too complex
 		{
+			GetWatchdog().Kill();
 			dotbinary/=2; //this is the number which modifies the approximation
 			if(fOfX(aproximation+dotbinary)>theta) //if the value to be added overshoots it does not add
 				aproximation+=dotbinary;
@@ -48,6 +51,7 @@ double DoctaEight::getDistance()
 
 void DoctaEight::shoot(void)
 {
+	GetWatchdog().Kill();
 	cout << "shootin'" << endl;
 	
 	getDistance();

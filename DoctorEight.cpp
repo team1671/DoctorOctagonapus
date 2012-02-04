@@ -31,6 +31,7 @@
 #include <iostream>
 #include "WPILib.h"
 #include "nivision.h"
+#include <stdlib.h>
 //for cams
 #include "cmath"
 //for distance algorithm
@@ -46,6 +47,8 @@ AxisCamera &camera = AxisCamera::GetInstance("10.16.71.11");
 ColorImage image(IMAQ_IMAGE_HSL);
 //create an image to buffer pics
 
+using namespace std;
+
 class DoctaEight : public SimpleRobot
 {
 	
@@ -60,7 +63,7 @@ class DoctaEight : public SimpleRobot
 	CANJaguar lefty, righty, leftyB, rightyB, intake, arm, LTop, LBot;
 	//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
 	
-	signed char negate, choiceTarget, distanceTarget, itt;
+	signed char negate, choiceTarget, distanceTarget, itt, rep;
 	//negate for turning drive, choice target target selected, distance target for getting distance, itt for itterations
 	
 	double firstTarget, secondTarget, thirdTarget, decrement;
@@ -109,6 +112,8 @@ public:
 		cycle = 0;
 		decrement=1;
 		negate=1;
+		itt = 0;
+		rep = 0;
 		
 		lefty.ChangeControlMode(CANJaguar::kPercentVbus);
 		righty.ChangeControlMode(CANJaguar::kPercentVbus);
@@ -169,12 +174,10 @@ public:
 	{
 		GetWatchdog().Kill();
 		
-		printf("Operator\n");
-		
 		while (IsOperatorControl())
 		{
+			cout << "Operator\n" ;
 
-			GetWatchdog().Kill();
 			//RainbowDash();//output to dashboard
 			
 			if (copilot.GetTop())
@@ -185,11 +188,12 @@ public:
 				arm.Set(0);
 			//move arm
 			
-			
+			above:
+			//this is because targets may momentarily not be tracked in which case I want to re-execute
+			//copilot portion before drive is called and jags are set to 0 or other by pilot
 			if (copilot.GetRawButton(1))
 			{
 				aim();
-				cout << "Operator" << endl;
 			}
 			else
 				decrement = 1;
@@ -199,9 +203,10 @@ public:
 			if (copilot.GetRawButton(2))
 			{
 				shoot();
-				cout << "Operator" << endl;
 			}
 			
+			if (copilot.GetRawButton(2) or copilot.GetRawButton(1))
+				goto above;
 			
 			intake.Set(copilot.GetTwist());
 			//take the balls
@@ -223,6 +228,7 @@ public:
 		LBotEnc.Stop();
 		//stops encoders
 	}
+	//printf("Operator\n");
 };
 
 #include "SpideySense.h"

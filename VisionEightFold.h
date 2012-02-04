@@ -12,6 +12,8 @@ double DoctaEight::getDistance()
 	camera.GetImage(&image);
 	vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
 	
+	targetSelect();
+	
 	double aproximation=0;
 	
 	if (limitedDistance == 1)

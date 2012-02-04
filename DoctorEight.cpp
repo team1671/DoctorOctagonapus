@@ -1,5 +1,5 @@
 /*
- *	Gage Ervin and Emmanuel Lopez		Team 1671 
+ *	Gage Ervin, Emmanuel Lopez, Aaron Ramadan, and Robin Chodbury		Team 1671 
  */
 
 
@@ -41,14 +41,14 @@
 #define CAMERAHEIGHT 80
 //inches -- correct later
 
-AxisCamera &camera = AxisCamera::GetInstance();
+AxisCamera &camera = AxisCamera::GetInstance("10.16.71.11");
 //output from cameras to driverstation (so we can see it)
-ColorImage image(IMAQ_IMAGE_RGB);
+ColorImage image(IMAQ_IMAGE_HSL);
 //create an image to buffer pics
 
-class DoctaEight  
+class DoctaEight : public SimpleRobot
 {
-	public: SimpleRobot
+	
 	BinaryImage* binImg;
 	//make image	
 	
@@ -57,7 +57,7 @@ class DoctaEight
 	
 	Joystick pilot, copilot;
 	
-	CANJaguar lefty, righty, leftyB, rightyB, intake, LTop, LBot, arm;
+	CANJaguar lefty, righty, leftyB, rightyB, intake, arm, LTop, LBot;
 	//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
 	
 	signed char negate, choiceTarget, distanceTarget, itt;
@@ -70,7 +70,62 @@ class DoctaEight
 	//switch between primary and secondary distance tracking based on number of targets
 	
 public:
-	DoctaEight(void);
+	DoctaEight(void):
+	//constructs
+	pilot(1),
+	copilot(2),
+	//controller(USB port)
+	lefty(2),
+	righty(3),
+	leftyB(4),
+	rightyB(5),
+	arm(9),
+	intake(8),
+	LTop(6),
+	LBot(7),
+	//jag(CANjag number)
+	LTopEnc(1,2),
+	LBotEnc(3,4)
+	//encoders(AChannel, BChannel)
+	{
+		GetWatchdog().Kill();
+		binImg = image.ThresholdHSL(0, 250, 30, 200, 130, 270);
+		//HSL values (MUST BE FOUND BY EXPERIMENT)
+		camera.WriteMaxFPS(30);
+		//FPS
+		camera.WriteBrightness(30);
+		//
+		camera.WriteWhiteBalance(AxisCamera::kWhiteBalance_Hold);
+		//white balance -- set manually via internet connection w/hold
+		camera.WriteResolution(AxisCamera::kResolution_320x240);
+		//resolution
+		camera.WriteColorLevel(100);
+		//low color
+		camera.WriteCompression(30);
+		//lower easier on CRIO and harder on cam
+
+
+		limitedDistance = 0;
+		decrement=1;
+		negate=1;
+		
+		lefty.ChangeControlMode(CANJaguar::kPercentVbus);
+		righty.ChangeControlMode(CANJaguar::kPercentVbus);
+		leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
+		rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
+		intake.ChangeControlMode(CANJaguar::kPercentVbus);
+		LTop.ChangeControlMode(CANJaguar::kPercentVbus);
+		LBot.ChangeControlMode(CANJaguar::kPercentVbus);
+		//CANJags currently % (-1 to 1)
+		
+		LTopEnc.Reset();
+		LBotEnc.Reset();
+		//reset encoders
+		LTopEnc.Start();
+		LBotEnc.Start();
+		//start encoders
+	}
+
 	//autonomous and driver control
 	void targetSelect(void);
 	//selects target
@@ -83,8 +138,7 @@ public:
 	//uses formula and distance to set jag percentages
 	void drive(void);
 	//the drive system
-	void RainbowDash(void)
-	//pony works like c code braces, like this rainbow.Add<Typegoeshere>(variable)
+	/*void RainbowDash(void)//pony works like c code braces, like this rainbow.Add<Typegoeshere>(variable)
 	{
 		Dashboard &rainbow = DriverStation::GetInstance()->GetHighPriorityDashboardPacker();
 		rainbow.AddCluster();//displays the target nubmers
@@ -97,7 +151,7 @@ public:
 			rainbow.AddDouble(decrement);
 		rainbow.FinalizeCluster();
 		rainbow.Finalize();//need this for the ending
-	}
+	}*/
 	
 	void Autonomous(void)
 	{
@@ -114,12 +168,13 @@ public:
 	{
 		GetWatchdog().Kill();			//PK puppy
 		
-		cout << "Operator" << endl;
+		printf("Operator\n");
 		
 		while (IsOperatorControl())
 		{
-			
-			RainbowDash();//output to dashboard
+
+			GetWatchdog().Kill();
+			//RainbowDash();//output to dashboard
 			
 			if (copilot.GetTop())
 				arm.Set(-1);
@@ -162,8 +217,6 @@ public:
 		//stops encoders
 	}
 };
-
-#include "BuildAndConstruct.h"
 
 #include "SpideySense.h"
 

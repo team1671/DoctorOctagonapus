@@ -1,6 +1,7 @@
 
 void DoctaEight::drive(void)
-{				
+{
+	GetWatchdog().Kill();				
 	if (pilot.GetY() > 0 && pilot.GetX() >= 0)//forward right
 	{
 		lefty.Set(pilot.GetY() * negate * decrement);//left motors full

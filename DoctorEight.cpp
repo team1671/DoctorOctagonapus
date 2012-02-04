@@ -23,9 +23,10 @@
  *
  * car drive, but turns full forward/back at extreme
  *
- * 1 will switch drive\
+ * 1 will switch drive
 */
-//to do:	launch code;	restrict particles;		
+
+//to do:	launch code;	restrict particles;	
 
 #include <iostream>
 #include "WPILib.h"
@@ -65,7 +66,7 @@ class DoctaEight : public SimpleRobot
 	signed char negate, choiceTarget, distanceTarget, itt, rep;
 	//negate for turning drive, choice target target selected, distance target for getting distance, itt for itterations
 	
-	double firstTarget, secondTarget, thirdTarget, decrement;
+	double firstTarget, secondTarget, thirdTarget, decrement, xCircle;
 	//targets (fourth is not one two or three XD), decriment to slow motors as aiming
 
 	bool limitedDistance, cycle;
@@ -141,8 +142,6 @@ public:
 	//finds distance using immage
 	void shoot(void);
 	//uses formula and distance to set jag percentages
-	void drive(void);
-	//the drive system
 	/*void RainbowDash(void)//pony works like c code braces, like this rainbow.Add<Typegoeshere>(variable)
 	{
 		Dashboard &rainbow = DriverStation::GetInstance()->GetHighPriorityDashboardPacker();
@@ -157,6 +156,45 @@ public:
 		rainbow.FinalizeCluster();
 		rainbow.Finalize();//need this for the ending
 	}*/
+	
+	void tardis(void)
+	{
+		if (pilot.GetRawButton(1) && cycle == 0)
+		{
+			negate *= -1;
+			cycle = 1;
+		}
+		else if (!pilot.GetRawButton(1))
+			cycle = 0;
+		//to reverse drive
+		
+		
+		if (pilot.GetY() > 0)
+		{
+			lefty.Set((pilot.GetY() + pilot.GetZ()*2 )*negate);
+			leftyB.Set((pilot.GetY() + pilot.GetZ()*2 )*negate);
+			righty.Set((pilot.GetY() - pilot.GetZ()*2 )*negate);
+			rightyB.Set((pilot.GetY() - pilot.GetZ()*2 )*negate);
+		}
+		else if (pilot.GetY() < 0)
+		{
+			lefty.Set((pilot.GetY() - pilot.GetZ()*2 )*negate);
+			leftyB.Set((pilot.GetY() - pilot.GetZ()*2 )*negate);
+			righty.Set((pilot.GetY() + pilot.GetZ()*2 )*negate);
+			rightyB.Set((pilot.GetY() + pilot.GetZ()*2 )*negate);
+		}
+		else
+		{
+			lefty.Set(0);
+			leftyB.Set(0);
+			righty.Set(0);
+			rightyB.Set(0);
+			
+		}
+
+	
+	
+	}
 	
 	void Autonomous(void)
 	{
@@ -210,17 +248,8 @@ public:
 			intake.Set(copilot.GetTwist());
 			//take the balls
 
+			tardis();
 			
-			if (pilot.GetRawButton(1) && cycle == 0)
-			{
-				negate *= -1;
-				cycle = 1;
-			}
-			else if (!pilot.GetRawButton(1))
-				cycle = 0;
-			//to reverse drive
-			
-			drive();//drive system
 			
 		}
 		LTopEnc.Stop();
@@ -233,7 +262,5 @@ public:
 #include "SpideySense.h"
 
 #include "VisionEightFold.h"
-
-#include "Tardis.h"
 
 START_ROBOT_CLASS(DoctaEight);

@@ -66,7 +66,7 @@ class DoctaEight : public SimpleRobot
 	double firstTarget, secondTarget, thirdTarget, decrement;
 	//targets (fourth is not one two or three XD), decriment to slow motors as aiming
 
-	bool limitedDistance;
+	bool limitedDistance, cycle;
 	//switch between primary and secondary distance tracking based on number of targets
 	
 public:
@@ -106,6 +106,7 @@ public:
 
 
 		limitedDistance = 0;
+		cycle = 0;
 		decrement=1;
 		negate=1;
 		
@@ -166,7 +167,7 @@ public:
 	
 	void OperatorControl(void)
 	{
-		GetWatchdog().Kill();			//PK puppy
+		GetWatchdog().Kill();
 		
 		printf("Operator\n");
 		
@@ -206,7 +207,13 @@ public:
 			//take the balls
 
 			
-			if (pilot.GetRawButton(1)){negate *= -1;}
+			if (pilot.GetRawButton(1) && cycle == 0)
+			{
+				negate *= -1;
+				cycle = 1;
+			}
+			else if (!pilot.GetRawButton(1))
+				cycle = 0;
 			//to reverse drive
 			
 			drive();//drive system

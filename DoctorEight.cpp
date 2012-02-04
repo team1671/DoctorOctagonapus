@@ -23,10 +23,9 @@
  *
  * car drive, but turns full forward/back at extreme
  *
- * 1 will switch drive
+ * 1 will switch drive\
 */
-
-//to do:	launch code;	
+//to do:	launch code;	restrict particles;		
 
 #include <iostream>
 #include "WPILib.h"

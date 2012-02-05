@@ -56,7 +56,7 @@ double DoctaEight::getDistance()
 void DoctaEight::shoot(void)
 {
 	GetWatchdog().Kill();
-	cout << "shootin'" << endl;
+	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "shootin");
 	
 	getDistance();
 	//if 0, too close to see target-- set jags low

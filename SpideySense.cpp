@@ -12,8 +12,9 @@ void DoctaEight::targetSelect(void)
 	if (rep%500 == 0)
 	{
 		rep = 0;
-		cout << "Number of targets: " << particles->size() << endl;
-	}
+		driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "%n", (int)particles->size());
+	} 
+	particles->size();
 
 	
 	/*
@@ -122,8 +123,7 @@ void DoctaEight::aim(void)
 		itt++;
 		if (itt >= 5)
 		{
-			cout << "Number of targets: " << particles->size() << endl << "Target selected: " << choiceTarget
-						<< endl << "Zeroing in: " << par.center_mass_x_normalized;
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "Number of targets: %d\nTarget selected: %n\nZeroing in: %d\n", particles->size(), choiceTarget, par.center_mass_x_normalized);  
 			itt = 0;
 		}
 		//output number of targets
@@ -156,5 +156,5 @@ void DoctaEight::aim(void)
 		
 		Wait (.005f);//wait a sec- the longer, the more will travel before decriment is reset
 	}
-	if (choiceTarget == 7){cout << "no target";}
+	if (choiceTarget == 7){driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "no target");}
 }

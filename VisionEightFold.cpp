@@ -1,3 +1,5 @@
+#include "DoctorEight.h"
+
 double DoctaEight::fOfX(double x)
 {
 	GetWatchdog().Kill();

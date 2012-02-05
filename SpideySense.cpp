@@ -1,3 +1,5 @@
+#include "DoctorEight.h"
+
 void DoctaEight::targetSelect(void)
 {
 	GetWatchdog().Kill();

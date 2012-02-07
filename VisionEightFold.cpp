@@ -10,7 +10,9 @@ double DoctaEight::fOfX(double x)
 double DoctaEight::getDistance()
 {
 	GetWatchdog().Kill();
-	cout << "Distance" << endl;
+	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "distance finding");
+	driverOut->UpdateLCD();
+	
 	camera.GetImage(&image);
 	vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
 	
@@ -49,6 +51,12 @@ double DoctaEight::getDistance()
 			accuracy=theta-fOfX(aproximation);
 		}
 	}
+	
+	if (choiceTarget == 7)
+	{
+		aproximation= -1;
+	}
+	
 	return aproximation;
 }
 
@@ -57,6 +65,11 @@ void DoctaEight::shoot(void)
 {
 	GetWatchdog().Kill();
 	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "shootin");
+	driverOut->UpdateLCD();
+	
+	//should have a while is _ or IsAutonomous portion to exit if timeout in autonomous
+	//ALSO shoot must exit if no targets!
+	//ALSO IF aproximation= -1 EXIT SHOOT
 	
 	getDistance();
 	//if 0, too close to see target-- set jags low

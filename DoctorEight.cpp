@@ -2,14 +2,15 @@
 
 DoctaEight::DoctaEight(void):
 //constructs
-driverOut(DriverStationLCD::GetInstance()),
 pilot(1),
 copilot(2),
 //controller(USB port)
+
 lefty(4),
-righty(2),
 leftyB(5),
+righty(2),
 rightyB(3),
+
 arm(9),
 intake(8),
 LTop(6),
@@ -38,10 +39,8 @@ LBotEnc(3,4)
 
 	limitedDistance = 0;
 	cycle = 0;
-	decrement=1;
 	negate=1;
-	itt = 0;
-	rep = 0;
+	drive=1;
 	
 	lefty.ChangeControlMode(CANJaguar::kPercentVbus);
 	righty.ChangeControlMode(CANJaguar::kPercentVbus);
@@ -67,23 +66,73 @@ void DoctaEight::tardis(void)
 		negate *= -1;
 		cycle = 1;
 	}
+	if (pilot.GetRawButton(4) && cycle == 0)
+	{
+		drive *= -1;
+		cycle = 1;
+	}
 	else if (!pilot.GetRawButton(1))
 		cycle = 0;
 	//to reverse drive			
-	righty.Set(-(pilot.GetY() + pilot.GetZ()));
-	rightyB.Set(-(pilot.GetY() + pilot.GetZ()));
-	lefty.Set(-(pilot.GetY() - pilot.GetZ()));
-	leftyB.Set(-(pilot.GetY() - pilot.GetZ()));
+	
+	if (drive == 1)
+	{
+		if (pilot.GetY() > 0 && pilot.GetZ() >= 0)
+		{
+			righty.Set(negate*(pilot.GetY() - pilot.GetZ()*2*pilot.GetY()));
+			rightyB.Set(negate*(pilot.GetY() - pilot.GetZ()*2*pilot.GetY()));
+			lefty.Set(negate*pilot.GetY());
+			leftyB.Set(negate*pilot.GetY());
+		}
+		else if (pilot.GetY() > 0 && pilot.GetZ() <= 0)
+		{
+			righty.Set(negate*pilot.GetY());
+			rightyB.Set(negate*pilot.GetY());
+			lefty.Set(negate*(pilot.GetY() + pilot.GetZ()*2*pilot.GetY()));
+			leftyB.Set(negate*(pilot.GetY() + pilot.GetZ()*2*pilot.GetY()));
+		}		
+		else if (pilot.GetY() < 0 && pilot.GetZ() >= 0)
+		{
+			righty.Set(negate*(pilot.GetY() - pilot.GetZ()*2*pilot.GetY()));
+			rightyB.Set(negate*(pilot.GetY() - pilot.GetZ()*2*pilot.GetY()));
+			lefty.Set(negate*pilot.GetY());
+			leftyB.Set(negate*pilot.GetY());
+		}
+		else if (pilot.GetY() < 0 && pilot.GetZ() <= 0)
+		{
+			righty.Set(negate*pilot.GetY());
+			rightyB.Set(negate*pilot.GetY());
+			lefty.Set(negate*(pilot.GetY() + pilot.GetZ()*2*pilot.GetY()));
+			leftyB.Set(negate*(pilot.GetY() + pilot.GetZ()*2*pilot.GetY()));
+		}
+		else
+		{
+			righty.Set(0);
+			rightyB.Set(0);
+			lefty.Set(0);
+			leftyB.Set(0);
+		}
+	}
+	else if (drive == -1)
+	{
+		righty.Set(negate*pilot.GetTwist());
+		rightyB.Set(negate*pilot.GetTwist());
+		lefty.Set(negate*pilot.GetZ());
+		leftyB.Set(negate*pilot.GetZ());
+	}
 }
 
 void DoctaEight::Autonomous(void)
 {
 	GetWatchdog().Kill();
-	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "auto:");
+	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "auto start");
+	driverOut->UpdateLCD();
 	aim();
-	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "auto:");
+	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "auto mid");
+	driverOut->UpdateLCD();
 	shoot();
-	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "auto:");
+	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "auto end");
+	driverOut->UpdateLCD();
 }
 
 void DoctaEight::OperatorControl(void)
@@ -92,9 +141,9 @@ void DoctaEight::OperatorControl(void)
 	
 	while (IsOperatorControl())
 	{
-		
-	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "operator");
 
+	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "operator");
+	driverOut->UpdateLCD();
 		
 		if (copilot.GetTop())
 			arm.Set(-1);
@@ -111,8 +160,6 @@ void DoctaEight::OperatorControl(void)
 		{
 			aim();
 		}
-		else
-			decrement = 1;
 		//if not aiming and shooting, return motor power
 		
 		
@@ -133,6 +180,5 @@ void DoctaEight::OperatorControl(void)
 	LBotEnc.Stop();
 	//stops encoders
 }
-//printf("Operator\n");
 
 START_ROBOT_CLASS(DoctaEight);

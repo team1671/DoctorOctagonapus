@@ -8,13 +8,9 @@ void DoctaEight::targetSelect(void)
 	vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
 	//finds targets
 	
-	rep++;
-	if (rep%500 == 0)
-	{
-		rep = 0;
-		driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "%n", (int)particles->size());
-	} 
-	particles->size();
+	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "Target Select");
+	driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "%n", (int)particles->size());
+	driverOut->UpdateLCD();
 
 	
 	/*
@@ -101,12 +97,12 @@ void DoctaEight::aim(void)
 {
 	GetWatchdog().Kill();
 	targetSelect();
-	cout << "AIM" << endl;
 	//find what point motors stop then this should be slightly above
-	while (decrement > .3 or decrement < -.3 and copilot.GetRawButton(1) and choiceTarget != 7)
-	{
+	while (copilot.GetRawButton(1) and choiceTarget != 7 or IsAutonomous() and choiceTarget != 7)
+	{//PID to also stop loop in second half
 		GetWatchdog().Kill();
 
+		
 		targetSelect();
 		//select target to shoot at-- will potentially change in while because turning may reveal better
 		//targets
@@ -118,24 +114,9 @@ void DoctaEight::aim(void)
 		ParticleAnalysisReport& par = (*particles)[choiceTarget];
 		//get report on target
 
-		//RainbowDash();
-		//output dashboard values
-		itt++;
-		if (itt >= 5)
-		{
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "Number of targets: %d\nTarget selected: %n\nZeroing in: %d\n", particles->size(), choiceTarget, par.center_mass_x_normalized);  
-			itt = 0;
-		}
+		driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "Aiming\nNumber of targets: %d\nTarget selected: %n\nZeroing in: %d\n", particles->size(), choiceTarget, par.center_mass_x_normalized);
+		driverOut->UpdateLCD();
 		//output number of targets
-		
-//		DO  NOT INCLUDE THIS UNTIL AFTER WE HAVE PARTICLES OR ELSE WILL EXIT LOOP
-/*		if (par.center_mass_x_normalized > -.3  && par.center_mass_x_normalized < .3)
-		{
-			decrement = par.center_mass_x_normalized*2;
-		}
-		else
-			decrement = 1;
-*/		//lower speed if aiming at target or set back to 1
 		
 		
 		//decrement is for keeping drive from moving back and forth continuously
@@ -143,18 +124,20 @@ void DoctaEight::aim(void)
 		{
 			righty.Set(0);
 			rightyB.Set(0);
-			lefty.Set(decrement);
-			leftyB.Set(decrement);
+			lefty.Set(1);//THIS MUST BE FIXED WITH PID
+			leftyB.Set(1);
 		}
 		else if(par.center_mass_x_normalized < 0)//turn left
 		{
 			lefty.Set(0);
 			leftyB.Set(0);
-			righty.Set(decrement);
-			rightyB.Set(decrement);
+			righty.Set(1);//THIS MUST BE FIXED WITH PID
+			rightyB.Set(1);
 		}
-		
-		Wait (.005f);//wait a sec- the longer, the more will travel before decriment is reset
 	}
-	if (choiceTarget == 7){driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "no target");}
+	if (choiceTarget == 7)
+	{
+		driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "no target");
+		driverOut->UpdateLCD();
+	}
 }

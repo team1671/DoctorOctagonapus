@@ -1,3 +1,11 @@
+
+
+
+
+//	see	doc8.h	for	todo
+
+
+
 #include "DoctorEight.h"
 
 double DoctaEight::fOfX(double x)
@@ -20,43 +28,46 @@ double DoctaEight::getDistance()
 	
 	double aproximation=0;
 	
-	if (limitedDistance == 1)
+	if (choiceTarget !=7)
 	{
-		ParticleAnalysisReport& par = (*particles)[distanceTarget];
-		
-		aproximation = 9//half height of target in inches over target to get adjacent
-						/tan(//tan of this to get opposite over adjacent
-								54*//angle of lens vision
-									((par.particleArea/24)//to get height in pixels
-										/par.imageHeight)//above divided to get ratio of size
-											/2);//to get half of angle and therefore right triangle
-	}
-	else
-	{
-		ParticleAnalysisReport& bottom = (*particles)[distanceTarget];//bottom target
-		ParticleAnalysisReport& top = (*particles)[choiceTarget];//top target 
-		
-		double theta=(top.center_mass_y_normalized-bottom.center_mass_y_normalized)/240*54;//the distance is turned into an angle (refer to fofx(x))
-		//107.5 is top target height 31.5 is bottom target height
-		
-		double accuracy=1;
-		double dotbinary=54;
-		while((accuracy<1)||(accuracy>-1))//binary approximation-> guesses using 1/2 distances until tlar -- function too complex
+		if (limitedDistance == 1)
 		{
-			GetWatchdog().Kill();
-			dotbinary/=2; //this is the number which modifies the approximation
-			if(fOfX(aproximation+dotbinary)>theta) //if the value to be added overshoots it does not add
-				aproximation+=dotbinary;
+			ParticleAnalysisReport& par = (*particles)[distanceTarget];
 			
-			accuracy=theta-fOfX(aproximation);
+			aproximation = 9//half height of target in inches over target to get adjacent
+							/tan(//tan of this to get opposite over adjacent
+									54*//angle of lens vision
+										((par.particleArea/24)//to get height in pixels
+											/par.imageHeight)//above divided to get ratio of size
+												/2);//to get half of angle and therefore right triangle
 		}
+		else
+		{
+			ParticleAnalysisReport& bottom = (*particles)[distanceTarget];//bottom target
+			ParticleAnalysisReport& top = (*particles)[choiceTarget];//top target 
+			
+			double theta=(top.center_mass_y_normalized-bottom.center_mass_y_normalized)/240*54;//the distance is turned into an angle (refer to fofx(x))
+			//107.5 is top target height 31.5 is bottom target height
+			
+			double accuracy=1;
+			double dotbinary=54;
+			while((accuracy<1)||(accuracy>-1))//binary approximation-> guesses using 1/2 distances until tlar -- function too complex
+			{
+				GetWatchdog().Kill();
+				dotbinary/=2; //this is the number which modifies the approximation
+				if(fOfX(aproximation+dotbinary)>theta) //if the value to be added overshoots it does not add
+					aproximation+=dotbinary;
+				
+				accuracy=theta-fOfX(aproximation);
+			}
+		}
+		
+		
 	}
-	
 	if (choiceTarget == 7)
 	{
 		aproximation= -1;
 	}
-	
 	return aproximation;
 }
 
@@ -64,6 +75,7 @@ double DoctaEight::getDistance()
 void DoctaEight::shoot(void)
 {
 	GetWatchdog().Kill();
+	driverOut->Clear();
 	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "shootin");
 	driverOut->UpdateLCD();
 	

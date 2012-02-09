@@ -2,7 +2,6 @@
 
 
 
-
 //	see	doc8.h	for	todo
 
 
@@ -133,24 +132,30 @@ void DoctaEight::aim(void)
 		
 		
 		//decrement is for keeping drive from moving back and forth continuously
-		if(par.center_mass_x_normalized > 0)//turn right; 
+		//turn
 		{
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line5, "TURNING RIGHT");
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line5, 
+			(
+				(par.center_mass_x_normalized > 0)?("TURNING RIGHT"):("TURNING LEFT"))//NOSEMICOLON!
+			);
 			driverOut->UpdateLCD();
-			/*righty.Set(0);
-			rightyB.Set(0);
-			lefty.Set(1);//THIS MUST BE FIXED WITH PID
-			leftyB.Set(1);*/
-		}
+			double offset=par.center_mass_x_normalized/54;
+			double safety=0.1;
+			leftyrighty(1*offset*safety,-1*offset*safety);
+			//righty.Set(1*offset);
+			//rightyB.Set(1*offset);
+			//lefty.Set(-1*offset);//THIS MUST BE FIXED WITH PID
+			//leftyB.Set(-1*offset);
+		}/*
 		else if(par.center_mass_x_normalized < 0)//turn left
 		{
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line5, "TURNING LEFT");
 			driverOut->UpdateLCD();
-			/*lefty.Set(0);
+			lefty.Set(0);
 			leftyB.Set(0);
 			righty.Set(1);//THIS MUST BE FIXED WITH PID
-			rightyB.Set(1);*/
-		}
+			rightyB.Set(1);
+		}*/
 	}
 	if (choiceTarget == 7)
 	{

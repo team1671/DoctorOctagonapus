@@ -1,51 +1,12 @@
-
-
-
-
-
 //PID TO STOP AIMING LOOP IN AUTONOMOUS
 //ALSO MUST USE PID TO SLOW AS TURNING TO AIM
 
+//set camera to allow anonymous viewing to outline target(available in the web console)
+//EX:	http://firstforge.wpi.edu/integration/viewcvs/viewcvs.cgi/trunk/extensions/camera/SquareTracker/src/edu/wpi/first/wpilibj/examples/SquareTrackerExtension.java?root=smart_dashboard&system=exsy1002&view=markup
+
+
 //should I make a particle threshold?
-//cam conflict?
-//		http://www.chiefdelphi.com/forums/showthread.php?t=101999
-//		http://www.chiefdelphi.com/forums/showthread.php?t=101792
-
-
-
-
-
-
-
-/*
- *	Gage Ervin, Emmanuel Lopez, Aaron Ramadan, and Robin Chodbury		Team 1671 
- */
-
-
-/*
- * COPILOT CONTROL
- *
- * 1 to turn (hold)
- *
- * 2 to shoot
- *
- * trigers will move arm
- *
- * intake is right thumbstick
- * 
- * WHEN SHOOTING ---- IMPORTANT!!!
- * UNLESS AT LEAST ONE TARGET IS IN SITE OR WE GET A COMPASS LATER DO NOT AIM OR SHOOT BECAUSE NOTHING WILL HAPPEN
- */
-
-/*
- * PILOT
- *
- * press 4 to switch between modified arcade and tank
- *
- * 1 will switch drive
-*/
-
-//to do:	launch code;	restrict particles;	
+//http://www.chiefdelphi.com/forums/showthread.php?t=101878
 
 #include "WPILib.h"
 #include "nivision.h"
@@ -70,29 +31,20 @@ class DoctaEight : public SimpleRobot
 {
 	
 	BinaryImage* binImg;
-	//make image	
+	//make image
 	
-	Encoder LTopEnc, LBotEnc;
-	//launch system encoders
-	
-	Joystick pilot, copilot;
-	
-	CANJaguar lefty, righty, leftyB, rightyB, intake, arm, LTop, LBot;
-	//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
-	
-	signed char negate, choiceTarget, distanceTarget, drive;
+	Joystick copilot;
+	signed char choiceTarget, distanceTarget;
 	//negate for turning drive, choice target target selected, distance target for getting distance, itt for itterations
 	
 	double firstTarget, secondTarget, thirdTarget, xCircle;
 	//targets (fourth is not one two or three XD), decriment to slow motors as aiming
 
-	bool limitedDistance, cycle;
+	bool limitedDistance;
 	//switch between primary and secondary distance tracking based on number of targets
 	
 public:
 	DoctaEight(void);
-	//autonomous and driver control
-	void tardis(void);
 	void shoot(void);
 	//uses formula and distance to set jag percentages
 	void targetSelect(void);

@@ -1,7 +1,6 @@
 
 
 
-
 //	see	doc8.h	for	todo
 
 
@@ -48,21 +47,16 @@ double DoctaEight::getDistance()
 			
 			double theta=(top.center_mass_y_normalized-bottom.center_mass_y_normalized)/240*54;//the distance is turned into an angle (refer to fofx(x))
 			//107.5 is top target height 31.5 is bottom target height
-			
-			double accuracy=1;
+
 			double dotbinary=54;
-			while((accuracy<1)||(accuracy>-1))//binary approximation-> guesses using 1/2 distances until tlar -- function too complex
+			for(int i=0; i<30; i++)//binary approximation-> guesses using 1/2 distances until tlar -- function too complex
 			{
 				GetWatchdog().Kill();
 				dotbinary/=2; //this is the number which modifies the approximation
 				if(fOfX(aproximation+dotbinary)>theta) //if the value to be added overshoots it does not add
 					aproximation+=dotbinary;
-				
-				accuracy=theta-fOfX(aproximation);
 			}
 		}
-		
-		
 	}
 	if (choiceTarget == 7)
 	{

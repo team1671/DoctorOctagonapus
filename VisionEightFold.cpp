@@ -1,9 +1,4 @@
-
-
-
 //	see	doc8.h	for	todo
-
-
 
 #include "DoctorEight.h"
 

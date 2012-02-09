@@ -1,3 +1,14 @@
+
+
+
+
+
+//	see	doc8.h	for	todo
+
+
+
+
+
 #include "DoctorEight.h"
 
 void DoctaEight::targetSelect(void)
@@ -7,9 +18,9 @@ void DoctaEight::targetSelect(void)
 	//gets image from cam
 	vector<ParticleAnalysisReport>* particles = binImg->GetOrderedParticleAnalysisReports();
 	//finds targets
-	
-	driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "Target Select");
-	driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "%n", (int)particles->size());
+
+	driverOut->Clear();	
+	driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "Target Select, numTargets: %n", (int)particles->size());
 	driverOut->UpdateLCD();
 
 	
@@ -113,8 +124,10 @@ void DoctaEight::aim(void)
 		//finds targets
 		ParticleAnalysisReport& par = (*particles)[choiceTarget];
 		//get report on target
-
-		driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "Aiming\nNumber of targets: %d\nTarget selected: %n\nZeroing in: %d\n", particles->size(), choiceTarget, par.center_mass_x_normalized);
+		driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "Aiming");
+		driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "Number of targets: %d", particles->size());
+		driverOut->PrintfLine(DriverStationLCD::kUser_Line3, "Target selected: %n", choiceTarget);
+		driverOut->PrintfLine(DriverStationLCD::kUser_Line4, "Zeroing in: %d", par.center_mass_x_normalized);
 		driverOut->UpdateLCD();
 		//output number of targets
 		
@@ -122,21 +135,26 @@ void DoctaEight::aim(void)
 		//decrement is for keeping drive from moving back and forth continuously
 		if(par.center_mass_x_normalized > 0)//turn right; 
 		{
-			righty.Set(0);
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line5, "TURNING RIGHT");
+			driverOut->UpdateLCD();
+			/*righty.Set(0);
 			rightyB.Set(0);
 			lefty.Set(1);//THIS MUST BE FIXED WITH PID
-			leftyB.Set(1);
+			leftyB.Set(1);*/
 		}
 		else if(par.center_mass_x_normalized < 0)//turn left
 		{
-			lefty.Set(0);
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line5, "TURNING LEFT");
+			driverOut->UpdateLCD();
+			/*lefty.Set(0);
 			leftyB.Set(0);
 			righty.Set(1);//THIS MUST BE FIXED WITH PID
-			rightyB.Set(1);
+			rightyB.Set(1);*/
 		}
 	}
 	if (choiceTarget == 7)
 	{
+		driverOut->Clear();
 		driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "no target");
 		driverOut->UpdateLCD();
 	}

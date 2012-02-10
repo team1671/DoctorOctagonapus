@@ -47,7 +47,9 @@
 #include "cmath"
 
 #define IO (DriverStation::GetInstance()->GetEnhancedIO())
+
 #define CAMERAHEIGHT 80
+#define ANGLEOFLAUNCH 45
 #define angle 54
 
 static AxisCamera &camera = AxisCamera::GetInstance("10.16.71.11");
@@ -67,6 +69,7 @@ class DoctaEight : public SimpleRobot
 	//launch system encoders
 	
 	Joystick pilot, copilot;
+	KinectStick *leftArm, *rightArm;
 	
 	CANJaguar lefty, righty, leftyB, rightyB, intake, arm, LTop, LBot;
 	//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
@@ -85,6 +88,9 @@ public:
 	pilot(1),
 	copilot(2),
 	//controller(USB port)
+	
+	leftArm(1),
+	rightArm(2),
 	
 	lefty(4),
 	leftyB(5),
@@ -188,6 +194,9 @@ public:
 			/*
 			 * use equ to find power to get power values where the portion of the power values' equated distance is
 			 * 		the correct height when the potrion is the distance to the target
+			 * 		ANGLEOFLAUNCH
+			 * 		CAMERAHEIGHT
+			 * 		getDistance()
 			 *
 			 *if (encoders show motors below speed)
 			 *	speed motors
@@ -228,6 +237,7 @@ public:
 
 		while (IsOperatorControl())
 		{
+			GetWatchdog().Kill();
 			output();
 			
 			arm.Set(copilot.GetZ());
@@ -446,12 +456,12 @@ public:
 			negate *= -1;
 			cycle = 1;
 		}
-		if (pilot.GetRawButton(4) && cycle == 0)
+		else if (pilot.GetRawButton(4) && cycle == 0)
 		{
-			//drive *= -1;	GET Y FOR RIGHT THUMB??
+			drive *= -1;	GET Y FOR RIGHT THUMB??
 			cycle = 1;
 		}
-		else if (!pilot.GetRawButton(1))
+		else if (!pilot.GetRawButton(1) && !pilot.GetRawButton(4))
 			cycle = 0;
 		//to reverse drive			
 		
@@ -494,7 +504,12 @@ public:
 			}
 		}
 		else if (drive == -1)
-			leftyrighty(negate*pilot.GetY(), negate*pilot.GetTwist());
+		{
+			GetWatchdog().Kill();
+			leftyrighty (leftArm -> GetY(), rightArm -> GetTwist());
+		}
+		/*else if (drive == )
+			leftyrighty(negate*pilot.GetY(), negate*pilot.GetTwist());*/
 	}
 
 };

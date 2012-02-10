@@ -8,7 +8,7 @@
  * complete shooter function-> USE ARC CALCULATION
  * 
  * set camera to allow anonymous viewing to outline target(available in the web console)
- * http://firstforge.wpi.edu/integration/viewcvs/viewcvs.cgi/trunk/extensions/camera/SquareTracker/src/edu/wpi/first/wpilibj/examples/SquareTrackerExtension.java?root=smart_dashboard&system=exsy1002&view=markup
+ * http://firstforge.wpi.edu/integratio...02&view=markup
  * 
  * cleanup highly messy code, break back into sepparate files, et all
  */
@@ -51,20 +51,6 @@
 #define angle 54
 
 static AxisCamera &camera = AxisCamera::GetInstance("10.16.71.11");
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class DoctaEight : public SimpleRobot
@@ -159,16 +145,33 @@ public:
 	{
 		GetWatchdog().Kill();
 		aimin = 1;
-		while (copilot.GetRawButton(1))
+		while (copilot.GetRawButton(1) or IsAutonomous())
 		{
 			GetWatchdog().Kill();
 			targetSelect();//refresh target to aim at
+			output();
 			if (choiceTarget!=-1 and particles->size() < 5)//if there is a target
 			{
-				//camera.GetImage(&image);//store camera feed to image
-				output();
 				//HERE		Turn
-				//call shoot when no longer turning
+				/*psuedo
+				 * 
+				 * 
+				 * 
+				 * if (!negligibleDifference)
+				 * {
+				 * 		if (right)
+				 * 			left*decrement set
+				 * 		if (left)
+				 * 			right*decrement set
+				 * 	}
+				 * if (difference > minDegreeDifference and difference < maxDegreeDifference)
+				 * 		decrement*=cuberoot(difference)
+				 * Wait(.05);
+				 * if (encodersShowLittleMovement && differenceStillToGreat)
+				 * 		speedUp
+				 * else if (!differenceStillToGreat)
+				 * 		shoot();
+				 */
 			}
 		}
 		aimin = 0;
@@ -178,15 +181,28 @@ public:
 	{
 		GetWatchdog().Kill();
 		shootin =1;
-		
-		//should have a while is _ or IsAutonomous portion to exit if timeout in autonomous
-		//ALSO shoot must exit if no targets!
-		//ALSO IF aproximation= -1 no target or too many (though this shouldnt execute then)
-		
-		getDistance();
-		//if 0, too close to see target-- set jags low
-		//use lTop lBot and encoders
-		output();
+
+		while (getDistance() != -1)//while in aim() should count also
+		{
+			//getDistance()  <<  distance
+			/*
+			 * use equ to find power to get power values where the portion of the power values' equated distance is
+			 * 		the correct height when the potrion is the distance to the target
+			 *
+			 *if (encoders show motors below speed)
+			 *	speed motors
+			 *else
+			 * {
+			 * 		while (time approximation)
+			 * 		{
+			 * 			raise ball
+			 * 		}
+			 * }
+			 * 
+			 */
+
+			output();
+		}
 			
 		//SHOOT HERE!
 		shootin = 0;
@@ -201,7 +217,10 @@ public:
 	{
 		GetWatchdog().Kill();
 		output();
-		aim();
+		aim();//aim and shoot
+		//set shooter motors and lift motor to 0 or determined value
+		leftyrighty(0, 0);
+		
 	}
 	void DoctaEight::OperatorControl(void)
 	{
@@ -210,6 +229,7 @@ public:
 		while (IsOperatorControl())
 		{
 			output();
+			
 			arm.Set(copilot.GetZ());
 			//move simple platform arm
 						
@@ -220,7 +240,9 @@ public:
 						
 			if (copilot.GetRawButton(1))
 			{
-				aim();
+				aim();//aim then shoot
+				//set shooter motors and lift motor to 0 or determined value
+				leftyrighty(0, 0);
 			}
 		}
 		LTopEnc.Stop();
@@ -228,7 +250,7 @@ public:
 		//stops encoders
 	}
 	
-	void targetSelect(void)
+	void targetSelect(void)//pick the target to shoot at (highest visible) then the one to distance with
 	{
 		GetWatchdog().Kill();
 		int numTargetsC;
@@ -238,7 +260,6 @@ public:
 		
 		if (3 == numTargetsC or 4 == numTargetsC)//if 3 or 4 targets visible
 		{
-			
 			//choose target to aim/shoot at -> highest target
 			if (firstYC > secondYC && firstYC > thirdYC)
 				choiceTarget = 1;
@@ -281,7 +302,7 @@ public:
 			choiceTarget = -1;
 	}
 
-	double fOfX(double x)//part of accurate distance finding
+	double fOfX(double x)//part of accurate distance finding in getDistance()
 	{
 		GetWatchdog().Kill();
 		return 	(atan((107.5-CAMERAHEIGHT)/(x)) //angle from top triangle (triangle formed by camera target and line at camera's height)
@@ -337,6 +358,9 @@ public:
 	
 	double values (int numTargets, double toCenter, double centerY, double centerX, double firstY, double secondY, double thirdY, double fourthY, double area, double height, double distanceYnorm)
 	{
+		//gives cam info
+		
+		
 		Threshold threshold(60, 140, 20, 110, 0, 60);
 		ParticleFilterCriteria2 criteria[] = {{IMAQ_MT_BOUNDING_RECT_WIDTH, 30, 400, false, false},
 											{IMAQ_MT_BOUNDING_RECT_HEIGHT, 40, 400, false, false}};
@@ -378,10 +402,12 @@ public:
 	
 	void output (void)
 	{
+		
 		int numTargetsC;
 		double toCenterC, centerYC, centerXC, firstYC, secondYC, thirdYC, fourthYC, areaC, heightC, distanceYnormC;
 		values(numTargetsC, toCenterC, centerYC, centerXC, firstYC, secondYC, thirdYC, fourthYC, areaC, heightC, distanceYnormC);
-				
+		//GET INFO FROM values()
+		
 		if (IsAutonomous())
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "Auto");
 		else if (IsOperatorControl())
@@ -414,6 +440,7 @@ public:
 	
 	void DoctaEight::tardis(void)
 	{
+		GetWatchdog().Kill();
 		if (pilot.GetRawButton(1) && cycle == 0)
 		{
 			negate *= -1;

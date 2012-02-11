@@ -1,6 +1,8 @@
 /*
  * TODO LIST
  * 
+ * FIX ENCODERS TO RESET AND STUFF MORE EFFICIENTLY
+ * 
  * RGB VALUES FOR BETTER LIGHT
  * 
  * FB GET -> MUST USE PID TO SLOW AS TURNING TO AIM AND STOP AIMING LOOP IN AUTONOMOUS WHEN ON TARGET
@@ -35,13 +37,14 @@
 /*
  * PILOT
  *
- * press 4 to switch between modified arcade and tank
+ * press 4 to switch between modified arcade, kinect, and tank
  *
  * 1 will switch drive
 */
 
 
 #include "WPILib.h"
+#include "KinectStick.h"
 #include "Vision/RGBImage.h"
 #include "Vision/BinaryImage.h"
 #include "cmath"
@@ -51,6 +54,7 @@
 #define CAMERAHEIGHT 80
 #define ANGLEOFLAUNCH 45
 #define angle 54
+#define pi 3.14159265358979323846264
 
 static AxisCamera &camera = AxisCamera::GetInstance("10.16.71.11");
 
@@ -77,7 +81,7 @@ class DoctaEight : public SimpleRobot
 	signed char negate, choiceTarget, distanceTarget, drive;
 	//negate for turning drive, choice target target selected, distance target for getting distance, itt for itterations
 	
-	double firstTarget, secondTarget, thirdTarget, xCircle;
+	double firstTarget, secondTarget, thirdTarget;
 	//targets (fourth is not one two or three XD), decriment to slow motors as aiming
 
 	bool limitedDistance, cycle, flag, aimin, shootin;
@@ -88,9 +92,6 @@ public:
 	pilot(1),
 	copilot(2),
 	//controller(USB port)
-	
-	leftArm(1),
-	rightArm(2),
 	
 	lefty(4),
 	leftyB(5),
@@ -106,6 +107,7 @@ public:
 	LBotEnc(3,4)
 	//encoders(AChannel, BChannel)
 	{
+		GetWatchdog().~Watchdog();
 		GetWatchdog().Kill();
 		
 		driverOut  = DriverStationLCD::GetInstance();
@@ -118,6 +120,10 @@ public:
 		//camera.WriteCompression(30);
 		//lower easier on CRIO and harder on cam
 
+		leftArm = new KinectStick(1);
+		rightArm = new KinectStick(2);
+				
+		
 		limitedDistance = 0;
 		flag = 0;
 		aimin=0;
@@ -147,9 +153,15 @@ public:
 	
 	
 		
-	void aim(void)
+	void aim()
 	{
 		GetWatchdog().Kill();
+		int numTargetsC;
+		double toCenterC, centerYC, centerXC, firstYC, secondYC, thirdYC, fourthYC, areaC, heightC, distanceYnormC;
+		//robot width-33			//inches
+		//robot length-18			//inches
+		double robotradius = 18.7949/*inches*/, pulsesperrotation = 250, angleDeg, distance, count, wheeldiameter = 4.0;
+			
 		aimin = 1;
 		while (copilot.GetRawButton(1) or IsAutonomous())
 		{
@@ -158,6 +170,21 @@ public:
 			output();
 			if (choiceTarget!=-1 and particles->size() < 5)//if there is a target
 			{
+				while (IsAutonomous()/*&& differenceisnottogreat*/ or IsOperatorControl() and copilot.GetRawButton(1))
+				{
+					values(numTargetsC, toCenterC, centerYC, centerXC, firstYC, secondYC, thirdYC, fourthYC, areaC, heightC, distanceYnormC);
+					
+					angleDeg=centerXC*54/320;
+					distance=robotradius*angleDeg*2*pi/360;
+					count=distance*250/(wheeldiameter*2*pi);
+					righty.PIDWrite(righty.GetPosition()+count);
+					rightyB.PIDWrite(rightyB.GetPosition()+count);
+					lefty.PIDWrite(lefty.GetPosition()-count);
+					leftyB.PIDWrite(leftyB.GetPosition()-count);
+				}
+				
+				
+				
 				//HERE		Turn
 				/*psuedo
 				 * 
@@ -173,15 +200,17 @@ public:
 				 * if (difference > minDegreeDifference and difference < maxDegreeDifference)
 				 * 		decrement*=cuberoot(difference)
 				 * Wait(.05);
-				 * if (encodersShowLittleMovement && differenceStillToGreat)
+				 * if (encodersShowLittleMovement)
 				 * 		speedUp
-				 * else if (!differenceStillToGreat)
-				 * 		shoot();
 				 */
 			}
 		}
 		aimin = 0;
 	}
+	
+	
+	
+	
 	
 	void shoot(void)
 	{
@@ -198,15 +227,8 @@ public:
 			 * 		CAMERAHEIGHT
 			 * 		getDistance()
 			 *
-			 *if (encoders show motors below speed)
+			 *while (encoders show motors below speed)
 			 *	speed motors
-			 *else
-			 * {
-			 * 		while (time approximation)
-			 * 		{
-			 * 			raise ball
-			 * 		}
-			 * }
 			 * 
 			 */
 
@@ -226,9 +248,27 @@ public:
 	{
 		GetWatchdog().Kill();
 		output();
-		aim();//aim and shoot
-		//set shooter motors and lift motor to 0 or determined value
+		righty.ChangeControlMode(CANJaguar::kPosition);
+		rightyB.ChangeControlMode(CANJaguar::kPosition);
+		lefty.ChangeControlMode(CANJaguar::kPosition);
+		leftyB.ChangeControlMode(CANJaguar::kPosition);
+		righty.EnableControl();
+		rightyB.EnableControl();
+		lefty.EnableControl();
+		leftyB.EnableControl();
+		aim();
+		righty.ChangeControlMode(CANJaguar::kPercentVbus);
+		rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
+		lefty.ChangeControlMode(CANJaguar::kPercentVbus);
+		leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
+		righty.EnableControl();
+		rightyB.EnableControl();
+		lefty.EnableControl();
+		leftyB.EnableControl();
 		leftyrighty(0, 0);
+			shoot();
+		intake.Set(1);
+		Wait(5);//exp wait time to shoot ball
 		
 	}
 	void DoctaEight::OperatorControl(void)
@@ -242,17 +282,39 @@ public:
 			
 			arm.Set(copilot.GetZ());
 			//move simple platform arm
-						
-			intake.Set(copilot.GetY());
-			//activate roller to take the balls
+
 
 			tardis();//robot drive <-below
 						
 			if (copilot.GetRawButton(1))
 			{
+				righty.ChangeControlMode(CANJaguar::kPercentVbus);
+				rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
+				lefty.ChangeControlMode(CANJaguar::kPercentVbus);
+				leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
+				righty.EnableControl();
+				rightyB.EnableControl();
+				lefty.EnableControl();
+				leftyB.EnableControl();
 				aim();//aim then shoot
 				//set shooter motors and lift motor to 0 or determined value
+				righty.ChangeControlMode(CANJaguar::kPercentVbus);
+				rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
+				lefty.ChangeControlMode(CANJaguar::kPercentVbus);
+				leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
+				righty.EnableControl();
+				rightyB.EnableControl();
+				lefty.EnableControl();
+				leftyB.EnableControl();
 				leftyrighty(0, 0);
+			}
+			if (copilot.GetRawButton(2))
+			{
+				/*if (notfastenough)
+				{	
+					shoot();
+				}
+				intake.Set(copilot.GetY());*/
 			}
 		}
 		LTopEnc.Stop();
@@ -260,7 +322,7 @@ public:
 		//stops encoders
 	}
 	
-	void targetSelect(void)//pick the target to shoot at (highest visible) then the one to distance with
+	int targetSelect(void)//pick the target to shoot at (highest visible) then the one to distance with
 	{
 		GetWatchdog().Kill();
 		int numTargetsC;
@@ -310,6 +372,7 @@ public:
 		}
 		else
 			choiceTarget = -1;
+		return (choiceTarget);
 	}
 
 	double fOfX(double x)//part of accurate distance finding in getDistance()
@@ -458,7 +521,7 @@ public:
 		}
 		else if (pilot.GetRawButton(4) && cycle == 0)
 		{
-			drive *= -1;	GET Y FOR RIGHT THUMB??
+			drive = drive%4 + 1;//	GET Y FOR RIGHT THUMB??
 			cycle = 1;
 		}
 		else if (!pilot.GetRawButton(1) && !pilot.GetRawButton(4))
@@ -503,13 +566,15 @@ public:
 					leftyrighty(negate*(-pilot.GetTwist()), negate*pilot.GetTwist());
 			}
 		}
-		else if (drive == -1)
+		else if (drive == 2)
 		{
 			GetWatchdog().Kill();
 			leftyrighty (leftArm -> GetY(), rightArm -> GetTwist());
 		}
-		/*else if (drive == )
-			leftyrighty(negate*pilot.GetY(), negate*pilot.GetTwist());*/
+		else if (drive == 3)
+		{
+			//leftyrighty(negate*pilot.GetY(), negate*pilot.);
+		}
 	}
 
 };

@@ -3,8 +3,8 @@
 #include "Vision/BinaryImage.h"
 #include "cmath"
 
-#define CAMERAHEIGHT 80
-#define ANGLEOFLAUNCH 45
+#define CAMERAHEIGHT 65
+#define ANGLEOFLAUNCH 60
 #define angle 54
 #define pi 3.14159265358979323846264
 #define RL 245
@@ -287,17 +287,19 @@ public:
 		driverOut->UpdateLCD();
 		
 		getDistance(aproximation);
-
-		driverOut->Printf(DriverStationLCD::kUser_Line3, 3, "Distance: %d", aproximation);
+		
+		if (aproximation != -1)
+			driverOut->Printf(DriverStationLCD::kUser_Line3, 2, "Distance: %d", aproximation);
+		else if (aimin)
+			driverOut->Printf(DriverStationLCD::kUser_Line5, 2, "Double to 0: %d", CamData.centerX);
 		
 		driverOut->Printf(DriverStationLCD::kUser_Line3, 3, "Number of targets: %n", CamData.numTargets);
 		driverOut->Printf(DriverStationLCD::kUser_Line4, 4, "Target selected: %n", choiceTarget);
-		driverOut->Printf(DriverStationLCD::kUser_Line5, 5, "Double to 0: %d", CamData.centerX);
 		
 		if (choiceTarget == -1)
-			driverOut->Printf(DriverStationLCD::kUser_Line6, 6, "no target");
+			driverOut->Printf(DriverStationLCD::kUser_Line6, 5, "no target");
 		else if (choiceTarget > 4)
-			driverOut->Printf(DriverStationLCD::kUser_Line6, 6, "too many targets");
+			driverOut->Printf(DriverStationLCD::kUser_Line6, 5, "too many targets");
 		driverOut->UpdateLCD();
 	}
 	

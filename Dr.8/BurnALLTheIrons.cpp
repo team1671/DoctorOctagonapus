@@ -11,14 +11,7 @@
  * http://firstforge.wpi.edu/integratio...02&view=markup
  * 
  * cleanup highly messy code, break back into sepparate files, definitions, nonglobal vars
- * 
- * add 524 ramp   in drvie for accel curve
- * 
  */
-
-
-//kinect drive off (+1/+2 in drive)
-//cube input
 
 /*
  * COPILOT CONTROL
@@ -41,7 +34,7 @@
 /*
  * PILOT
  *
- * press 4 to switch between modified arcade, kinect, and tank
+ * press 4 to switch between modified arcade, kinect, and tank(fails)
  *
  * 1 will switch drive
 */
@@ -56,13 +49,13 @@
 #define Kill GetWatchdog().Kill();
 #define CAMERAHEIGHT 65
 #define ANGLEOFLAUNCH 60
-#define VRAMPRATE .3
 #define angle 54
 #define RL 200
 #define RH 260
 #define GL 140
 #define GH 210
 #define BL 90
+#define RAMP 524
 #define BH 135
 #define MAX 2750
 #define KP 0.250
@@ -86,18 +79,14 @@ class DoctaEight : public SimpleRobot
 	//	KinectStick *leftArm, *rightArm;
 		
 	CANJaguar lefty, righty, leftyB, rightyB, intake, arm, LTop, LBot;
-	//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
 
-	
 	signed char distanceTarget, choiceTarget, negate, drive;
-	//negate for turning drive, choice target target selected, distance target for getting distance, itt for itterations
-	
+
 	double firstTarget, secondTarget, thirdTarget;
-	//targets (fourth is not one two or three XD), decriment to slow motors as aiming
 
 	bool limitedDistance, cycle, flag, aimin, shootin;
-	//switch between primary and secondary distance tracking based on number of targets
-	struct CamDataStruct//group for camera data use UpdateCamData before using these
+	
+	struct CamDataStruct
 	{
 		int numTargets;
 		double toCenter, 
@@ -127,8 +116,6 @@ public:
 	intake(8),
 	LTop(7),
 	LBot(6)
-	//controller(USB port)
-	//encoders(AChannel, BChannel)
 	{
 		Kill;
 		shootin = 0;
@@ -146,16 +133,21 @@ public:
 		LBot.ChangeControlMode(CANJaguar::kSpeed);
 		LBot.ConfigEncoderCodesPerRev(ENCCOUNT);
 		LTop.ConfigEncoderCodesPerRev(ENCCOUNT);
-		//CANJags currently % (-1 to 1)
+//		LTop.SetVoltageRampRate(RAMP);
+//		LBot.SetVoltageRampRate(RAMP);
+	//VAGETA!	
+		
 		LBot.SetPID(KP,KI,KD);
 		LTop.SetPID(KP,KI,KD);
 		
-		lefty.SetVoltageRampRate(VRAMPRATE);
-		leftyB.SetVoltageRampRate(VRAMPRATE);
-		righty.SetVoltageRampRate(VRAMPRATE);
-		rightyB.SetVoltageRampRate(VRAMPRATE);
-		LTop.SetVoltageRampRate(VRAMPRATE);
-		LBot.SetVoltageRampRate(VRAMPRATE);
+		
+		//VAGETA THERE IS NO WAY THAT CAN BE RIGHT
+//		lefty.SetVoltageRampRate(RAMP);
+//		leftyB.SetVoltageRampRate(RAMP);
+//		righty.SetVoltageRampRate(RAMP);
+//		rightyB.SetVoltageRampRate(RAMP);
+//		LTop.SetVoltageRampRate(RAMP);
+//		LBot.SetVoltageRampRate(RAMP);
 
 		//eyeOfSauron.WriteBrightness(30);
 		//eyeOfSauron.WriteWhiteBalance(AxisCamera::kWhiteBalance_Hold);

@@ -79,18 +79,18 @@ public:
 
 			if (copilot.GetRawButton(1))
 			{
-				LTop.Set(.2+copilot.GetTwist()*.8);
-				LBot.Set(.2+copilot.GetTwist()*.8);
+				LTop.Set(.3+copilot.GetZ()*.4);
+				LBot.Set(.3+copilot.GetZ()*.4);
 			}
 			else if (copilot.GetRawButton(2))
 			{
-				LTop.Set(.5+copilot.GetTwist()*.5);
-				LBot.Set(.5+copilot.GetTwist()*.5);
+				LTop.Set(.4+copilot.GetZ()*.4);
+				LBot.Set(.4+copilot.GetZ()*.4);
 			}
 			else if (copilot.GetRawButton(3))
 			{
-				LTop.Set(.8+copilot.GetTwist()*.2);
-				LBot.Set(.8+copilot.GetTwist()*.2);
+				LTop.Set(.7+copilot.GetZ()*.1);
+				LBot.Set(.7+copilot.GetZ()*.1);
 			}
 			else if (copilot.GetRawButton(4))
 			{

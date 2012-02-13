@@ -1,63 +1,26 @@
-/*
- * PID not in yet
- * 
- * pilot->y cycles drive: mod arcade/tank/kinect
- * 
- * copilot
- * .3,.4,.5,.6,.7,.8,.9
- * press LB and a,b,x,y,back,start,left stick button, right stick button to set top
- * press RB and a,b,x,y,back,start,left stick button, right stick button to set bot
- * RT will increase overall spd for launch
- * LT will decrease = =
- * intake is y on left thumb
- * arm is X on right thumb
- * 
- */
-
-
-
-//cube input
-//ADD 524 RAMP    for accel curve in drive
-
-
-
-
 #include "WPILib.h"
 //#include "KinectStick.h"
 
 
-#define MAX 2750
+#define MAX 50
 #define KP 0.250
 #define KI 0.015
 #define KD 0.020
 #define ENCCOUNT 360
+#define REDRUM GetWatchdog().Kill()
 
 class DoctaEight : public SimpleRobot
 {	
 	DriverStationLCD* driverOut;
-	//launch system encoders
-	
-	Timer clock;
 	
 	Joystick pilot, copilot;
-//	KinectStick *leftArm, *rightArm;
 	
 	CANJaguar lefty, righty, leftyB, rightyB, intake, arm, LTop, LBot;
-	//left and right motors, recieve ball, lift ball to launching system, launch system, platform arm
-
-	signed char negate, choiceTarget, distanceTarget, drive;
-	//negate for turning drive, choice target target selected, distance target for getting distance, itt for itterations
-	
-	double change;
-	
-	bool limitedDistance, cycle;
-	//switch between primary and secondary distance tracking based on number of targets
 	
 public:
 	DoctaEight::DoctaEight(void):
 	pilot(1),
 	copilot(2),
-	//controller(USB port)
 	
 	lefty(4),
 	leftyB(5),
@@ -68,220 +31,99 @@ public:
 	intake(8),
 	LTop(7),
 	LBot(6)
-//	//jag(CANjag number)
-	//encoders(AChannel, BChannel)
 	{
-		GetWatchdog().Kill();
-		
+		REDRUM;
 		driverOut  = DriverStationLCD::GetInstance();
-
-//		leftArm = new KinectStick(1);
-//		rightArm = new KinectStick(2);
-				
 		
-		
-		limitedDistance = 0;
-		cycle = 0;
-		drive=1;
-		negate=1;
-		change= 0;
-
 		lefty.ChangeControlMode(CANJaguar::kPercentVbus);
 		righty.ChangeControlMode(CANJaguar::kPercentVbus);
 		leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
 		rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
 		intake.ChangeControlMode(CANJaguar::kPercentVbus);
 		arm.ChangeControlMode(CANJaguar::kPercentVbus);
+		lefty.SetVoltageRampRate(0.3);
+		leftyB.SetVoltageRampRate(0.3);
+		righty.SetVoltageRampRate(0.3);
+		rightyB.SetVoltageRampRate(0.3);
 		
-		LTop.ChangeControlMode(CANJaguar::kSpeed);
-		LBot.ChangeControlMode(CANJaguar::kSpeed);
-		LBot.ConfigEncoderCodesPerRev(ENCCOUNT);
-		LTop.ConfigEncoderCodesPerRev(ENCCOUNT);
+		LTop.ChangeControlMode(CANJaguar::kPercentVbus);
+		LBot.ChangeControlMode(CANJaguar::kPercentVbus);
+		//LBot.ConfigEncoderCodesPerRev(ENCCOUNT);
+		//LTop.ConfigEncoderCodesPerRev(ENCCOUNT);
 		//CANJags currently % (-1 to 1)
-		LBot.SetPID(KP,KI,KD);
-		LTop.SetPID(KP,KI,KD);
+		//LBot.SetPID(KP,KI,KD);
+		//LTop.SetPID(KP,KI,KD);
+		LBot.SetVoltageRampRate(.3);
+		LTop.SetVoltageRampRate(.3);
 
-		//start encoders
 	}
 	
 	void DoctaEight::Autonomous(void)
 	{
-		GetWatchdog().Kill();
+
+		REDRUM;
 		output();
 	}
 	
 	void DoctaEight::OperatorControl(void)
 	{
-		GetWatchdog().Kill();
-		clock.Reset();
-		clock.Start();
+		REDRUM;
+		LTop.SetSafetyEnabled(0);
+		LTop.EnableControl();
+		LBot.SetSafetyEnabled(0);
+		LBot.EnableControl();
 		while (IsOperatorControl())
 		{
-			output();
-			
-			shoot();
-			
-			arm.Set(copilot.GetTwist());
-			//move simple platform arm
-			
-			intake.Set(copilot.GetY());
+			REDRUM;
+			output();		
 
-			tardis();//robot drive <-below
+			if (copilot.GetRawButton(1))
+			{
+				LTop.Set(.2+copilot.GetTwist()*.8);
+				LBot.Set(.2+copilot.GetTwist()*.8);
+			}
+			else if (copilot.GetRawButton(2))
+			{
+				LTop.Set(.5+copilot.GetTwist()*.5);
+				LBot.Set(.5+copilot.GetTwist()*.5);
+			}
+			else if (copilot.GetRawButton(3))
+			{
+				LTop.Set(.8+copilot.GetTwist()*.2);
+				LBot.Set(.8+copilot.GetTwist()*.2);
+			}
+			else if (copilot.GetRawButton(4))
+			{
+				LTop.Set(0);
+				LBot.Set(0);
+			}
+			
+			//move simple platform arm
+			leftyrighty(-pilot.GetY(), -pilot.GetTwist());
+			intake.Set(-copilot.GetY());
 			
 		}
-		clock.Stop();
 		//stops encoders
 	}
 
-	void shoot(void)
-	{
-		if ((int)clock.Get()%2 == 1)
-		{
-			if (copilot.GetZ()>.2)
-				change+=1;
-			if (copilot.GetZ()<.2)
-					change-=1;
-		}
-		
-		if (copilot.GetRawButton(1))
-		{
-			if (copilot.GetRawButton(9))
-				LTop.Set(0);
-			if (copilot.GetRawButton(10))
-				LBot.Set(0);
-		}
-		else if (copilot.GetRawButton(2))
-		{
-			if (copilot.GetRawButton(9))
-				LTop.Set(.3*MAX+change);
-			if (copilot.GetRawButton(10))
-				LBot.Set(.3*MAX+change);
-		}
-		else if (copilot.GetRawButton(3))
-		{
-			if (copilot.GetRawButton(9))
-				LTop.Set(.4*MAX+change);
-			if (copilot.GetRawButton(10))
-				LBot.Set(.4*MAX+change);
-		}
-		else if (copilot.GetRawButton(4))
-		{
-			if (copilot.GetRawButton(9))
-				LTop.Set(.5*MAX+change);
-			if (copilot.GetRawButton(10))
-				LBot.Set(.5*MAX+change);
-		}
-		else if (copilot.GetRawButton(5))
-		{
-			if (copilot.GetRawButton(9))
-				LTop.Set(.6*MAX+change);
-			if (copilot.GetRawButton(10))
-				LBot.Set(.6*MAX+change);
-		}
-		else if (copilot.GetRawButton(6))
-		{
-			if (copilot.GetRawButton(9))
-				LTop.Set(.7*MAX+change);
-			if (copilot.GetRawButton(10))
-				LBot.Set(.7*MAX+change);
-		}
-		else if (copilot.GetRawButton(7))
-		{
-			if (copilot.GetRawButton(9))
-				LTop.Set(.8*MAX+change);
-			if (copilot.GetRawButton(10))
-				LBot.Set(.8*MAX+change);
-		}
-		else if (copilot.GetRawButton(8))
-		{
-			if (copilot.GetRawButton(9))
-				LTop.Set(.9*MAX+change);
-			if (copilot.GetRawButton(10))
-				LBot.Set(.9*MAX+change);
-		}
-		
-	}
+	
 	void output (void)
 	{
+		REDRUM;
 		if (IsAutonomous())
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "Auto");
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "blaarag");
 		else if (IsOperatorControl())
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "Opp");
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "YUNODRIVEBETTER?");
 		driverOut->UpdateLCD();
 	}//nom nom nom
 	
 	void DoctaEight::leftyrighty(double left, double right)//set drive motors on either side
 	{
-		GetWatchdog().Kill();
-		righty.Set(right);
-		rightyB.Set(right);
-		lefty.Set(left);
-		leftyB.Set(left);
-	}
-	
-	void DoctaEight::tardis(void)
-	{
-		GetWatchdog().Kill();
-		if (pilot.GetRawButton(1) && cycle == 0)
-		{
-			negate *= -1;
-			cycle = 1;
-		}
-		else if (pilot.GetRawButton(4) && cycle == 0)
-		{
-			drive = drive%4 + 2;//	Change to plus 1 for kinect drive be included
-			cycle = 1;
-		}
-		else if (!pilot.GetRawButton(1) && !pilot.GetRawButton(4))
-			cycle = 0;
-		//to reverse drive			
-		
-		if (drive == 1)
-		{
-			if (pilot.GetY() > .01 && pilot.GetTwist() >= 0)
-			{
-				if (negate == 1)
-					leftyrighty(negate*(pilot.GetY() - pilot.GetTwist()*2*pilot.GetY()), negate*pilot.GetY());
-				else
-					leftyrighty(negate*pilot.GetY(), negate*(pilot.GetY() - pilot.GetTwist()*2*pilot.GetY()));
-			}
-			else if (pilot.GetY() > .01 && pilot.GetTwist() <= 0)
-			{
-				if (negate ==1)
-					leftyrighty(negate*pilot.GetY(), negate*(pilot.GetY() + pilot.GetTwist()*2*pilot.GetY()));
-				else
-					leftyrighty(negate*(pilot.GetY() + pilot.GetTwist()*2*pilot.GetY()), negate*pilot.GetY());
-			}		
-			else if (pilot.GetY() < -.01 && pilot.GetTwist() >= 0)
-			{
-				if (negate == 1)
-					leftyrighty(negate*(pilot.GetY() - pilot.GetTwist()*2*pilot.GetY()), negate*pilot.GetY());
-				else
-					leftyrighty(negate*pilot.GetY(), negate*(pilot.GetY() - pilot.GetTwist()*2*pilot.GetY()));
-			}
-			else if (pilot.GetY() < -.01 && pilot.GetTwist() <= 0)
-			{
-				if (negate == 1)
-					leftyrighty(negate*pilot.GetY(), negate*(pilot.GetY() + pilot.GetTwist()*2*pilot.GetY()));
-				else
-					leftyrighty(negate*(pilot.GetY() + pilot.GetTwist()*2*pilot.GetY()), negate*pilot.GetY());
-			}
-			else
-			{
-				if (negate == 1)
-					leftyrighty(negate*pilot.GetTwist(), negate*(-pilot.GetTwist()));
-				else
-					leftyrighty(negate*(-pilot.GetTwist()), negate*pilot.GetTwist());
-			}
-		}
-		else if (drive == 2)
-		{
-			//leftyrighty (leftArm -> GetY(), rightArm -> GetTwist());
-		}
-		else if (drive == 3)
-		{
-			leftyrighty(negate*pilot.GetY(), negate*pilot.GetRawAxis(4));
-		}
+		REDRUM;
+		righty.Set(right*.9);
+		rightyB.Set(right*.9);
+		lefty.Set(left*.9);
+		leftyB.Set(left*.9);
 	}
 
 };

@@ -9,7 +9,9 @@
 #define KP 0.250
 #define KI 0.015
 #define KD 0.020
-#define ENCCOUNT 360
+#define kVOLTAGE 12
+#define kENCCOUNT 360
+#define RAMP .3
 #define REDRUM GetWatchdog().Kill()
 
 class DoctaEight : public SimpleRobot
@@ -40,32 +42,63 @@ public:
 		REDRUM;
 		driverOut  = DriverStationLCD::GetInstance();
 		
+	/*
+	 * pv process var -error-> sp set point
+	 * mv manip var
+	 * proportional < change
+	 * integral < change rate of proportional controll
+	 * derivative < temper controll
+	 * 
+	 * ramp is high proportional, or I and P(MV) < pv found by encoder
+	
+	 ____.Faults(____::kCurrentFault);
+	 * kTemperatureFault = 2, kBusVoltageFault = 4, kGateDriverFault = 8
+	 *can use above to set fault for some things
+	 * void CANJaguar::ConfigNeutralMode(NeutralMode) 
+	 * fault time can also be set
+	*/
+		
 		lefty.ChangeControlMode(CANJaguar::kPercentVbus);
 		righty.ChangeControlMode(CANJaguar::kPercentVbus);
 		leftyB.ChangeControlMode(CANJaguar::kPercentVbus);
 		rightyB.ChangeControlMode(CANJaguar::kPercentVbus);
 		intake.ChangeControlMode(CANJaguar::kPercentVbus);
-		arm.ChangeControlMode(CANJaguar::kSpeed);
-//		lefty.SetVoltageRampRate(0.3);
-//		leftyB.SetVoltageRampRate(0.3);
-//		righty.SetVoltageRampRate(0.3);
-//		rightyB.SetVoltageRampRate(0.3);
-		
+		arm.ChangeControlMode(CANJaguar::kPercentVbus);
+
 		LTop.ChangeControlMode(CANJaguar::kSpeed);
 		LBot.ChangeControlMode(CANJaguar::kSpeed);
+		LBot.SetPID(KP,KI,KD);
+		LTop.SetPID(KP,KI,KD);
+		
+		lefty.ConfigMaxOutputVoltage(kVOLTAGE);
+		leftyB.ConfigMaxOutputVoltage(kVOLTAGE);
+		righty.ConfigMaxOutputVoltage(kVOLTAGE);
+		rightyB.ConfigMaxOutputVoltage(kVOLTAGE);
+		LTop.ConfigMaxOutputVoltage(kVOLTAGE);
+		LBot.ConfigMaxOutputVoltage(kVOLTAGE);
+		
 		LBot.SetSpeedReference(CANJaguar::kSpeedRef_QuadEncoder);
 		LTop.SetSpeedReference(CANJaguar::kSpeedRef_QuadEncoder);
 		LBot.SetPositionReference(CANJaguar::kPosRef_QuadEncoder);
 		LTop.SetPositionReference(CANJaguar::kPosRef_QuadEncoder);
-		LBot.ConfigEncoderCodesPerRev(ENCCOUNT);
-		LTop.ConfigEncoderCodesPerRev(ENCCOUNT);
+		//WHY BOTH?
+		
+		LBot.ConfigEncoderCodesPerRev(kENCCOUNT);
+		LTop.ConfigEncoderCodesPerRev(kENCCOUNT);
+		LTop.SetVoltageRampRate(RAMP);//MAXIMUM
+		LBot.SetVoltageRampRate(RAMP);//V CHANGE
+										//OR I + P
+		lefty.SetVoltageRampRate(RAMP);
+		leftyB.SetVoltageRampRate(RAMP);
+		righty.SetVoltageRampRate(RAMP);
+		rightyB.SetVoltageRampRate(RAMP);
 		LTop.EnableControl();
 		LBot.EnableControl();
-		//CANJags currently % (-1 to 1)
-		LBot.SetPID(KP,KI,KD);
-		LTop.SetPID(KP,KI,KD);
-		LBot.SetVoltageRampRate(.3);
-		LTop.SetVoltageRampRate(.3);
+		rightyB.EnableControl();
+		righty.EnableControl();
+		leftyB.EnableControl();
+		lefty.EnableControl();
+		
 		
 		outputCounter = 0;
 

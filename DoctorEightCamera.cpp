@@ -7,6 +7,8 @@
  * added TOPTARGETH
  * added BOTTOMTARGETH
  * 
+ * lowered resolution and FPS
+ * 
  * set approcimation =0 before binary opperation in getdistance
  * 
  * -moved below fom decl to updatecamvalues()-
@@ -76,7 +78,7 @@ public:
 		
 		//eyeOfSauron.WriteBrightness(30);
 		//eyeOfSauron.WriteWhiteBalance(AxisCamera::kWhiteBalance_Hold);
-		//eyeOfSauron.WriteResolution(AxisCamera::kResolution_640x360);
+		eyeOfSauron.WriteResolution(AxisCamera::kResolution_320x240);
 		//eyeOfSauron.WriteColorLevel(100);
 		
 		//eyeOfSauron.WriteCompression(30);
@@ -319,7 +321,7 @@ public:
 		else if (choiceTarget > 4)
 			driverOut->Printf(DriverStationLCD::kUser_Line2, 3, "too many targets");
 		else
-		{
+		{								//TRY I
 			driverOut->Printf(DriverStationLCD::kUser_Line4, 3, "Number of targets: %d", CamData.numTargets);
 			driverOut->Printf(DriverStationLCD::kUser_Line5, 4, "Target selected: %d", choiceTarget);
 		}

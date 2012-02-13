@@ -14,8 +14,16 @@
  * 
  */
 
+
+
+//cube input
+//ADD 524 RAMP    for accel curve in drive
+
+
+
+
 #include "WPILib.h"
-#include "KinectStick.h"
+//#include "KinectStick.h"
 
 
 #define MAX 2750
@@ -64,8 +72,6 @@ public:
 	//encoders(AChannel, BChannel)
 	{
 		GetWatchdog().Kill();
-		GetWatchdog().~Watchdog();
-		GetWatchdog().Kill();
 		
 		driverOut  = DriverStationLCD::GetInstance();
 
@@ -98,10 +104,38 @@ public:
 		//start encoders
 	}
 	
+	void DoctaEight::Autonomous(void)
+	{
+		GetWatchdog().Kill();
+		output();
+	}
+	
+	void DoctaEight::OperatorControl(void)
+	{
+		GetWatchdog().Kill();
+		clock.Reset();
+		clock.Start();
+		while (IsOperatorControl())
+		{
+			output();
+			
+			shoot();
+			
+			arm.Set(copilot.GetTwist());
+			//move simple platform arm
+			
+			intake.Set(copilot.GetY());
+
+			tardis();//robot drive <-below
+			
+		}
+		clock.Stop();
+		//stops encoders
+	}
 
 	void shoot(void)
 	{
-		if ((int)clock.Get()%10 == 1)
+		if ((int)clock.Get()%2 == 1)
 		{
 			if (copilot.GetZ()>.2)
 				change+=1;
@@ -167,44 +201,14 @@ public:
 		}
 		
 	}
-	
-	void DoctaEight::Autonomous(void)
-	{
-		GetWatchdog().Kill();
-		output();
-	}
-	void DoctaEight::OperatorControl(void)
-	{
-		GetWatchdog().Kill();
-		clock.Reset();
-		clock.Start();
-
-		while (IsOperatorControl())
-		{
-			GetWatchdog().Kill();
-			output();
-			
-			shoot();
-			
-			arm.Set(copilot.GetTwist());
-			//move simple platform arm
-			
-			intake.Set(copilot.GetY());
-
-			tardis();//robot drive <-below
-			
-		}
-		clock.Stop();
-		//stops encoders
-	}
-	
 	void output (void)
 	{
 		if (IsAutonomous())
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "Auto");
 		else if (IsOperatorControl())
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "Opp");
-	}
+		driverOut->UpdateLCD();
+	}//nom nom nom
 	
 	void DoctaEight::leftyrighty(double left, double right)//set drive motors on either side
 	{
@@ -281,4 +285,4 @@ public:
 	}
 
 };
-START_ROBOT_CLASS(DoctaEight);
+START_ROBOT_CLASS(DoctaEight); //DOCTOR OCTAGONAPUS WOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO

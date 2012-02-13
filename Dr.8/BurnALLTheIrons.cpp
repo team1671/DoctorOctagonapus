@@ -53,14 +53,11 @@
 #include "Vision/BinaryImage.h"
 #include "cmath"
 
-#define WHEELDIAMETER 4.0 
-#define ROBOTRADIUS 18.7949
-#define PULSESPERROTATION 250
 #define Kill GetWatchdog().Kill();
 #define CAMERAHEIGHT 65
 #define ANGLEOFLAUNCH 60
+#define VRAMPRATE .3
 #define angle 54
-#define pi 3.14159265358979323846264
 #define RL 200
 #define RH 260
 #define GL 140
@@ -77,7 +74,7 @@ static AxisCamera &eyeOfSauron = AxisCamera::GetInstance("10.16.71.11");
 DriverStationLCD* driverOut = DriverStationLCD::GetInstance();
 
 class DoctaEight : public SimpleRobot
-{  
+{	
 
 	BinaryImage *thresholdImage;
 	BinaryImage *bigObjectsImage;
@@ -153,6 +150,12 @@ public:
 		LBot.SetPID(KP,KI,KD);
 		LTop.SetPID(KP,KI,KD);
 		
+		lefty.SetVoltageRampRate(VRAMPRATE);
+		leftyB.SetVoltageRampRate(VRAMPRATE);
+		righty.SetVoltageRampRate(VRAMPRATE);
+		rightyB.SetVoltageRampRate(VRAMPRATE);
+		LTop.SetVoltageRampRate(VRAMPRATE);
+		LBot.SetVoltageRampRate(VRAMPRATE);
 
 		//eyeOfSauron.WriteBrightness(30);
 		//eyeOfSauron.WriteWhiteBalance(AxisCamera::kWhiteBalance_Hold);
@@ -427,43 +430,36 @@ public:
 		Kill;
 		//robot width-33			//inches
 		//robot length-18			//inches
-		double distance, count, angleDeg;
-
-
 		
 		aimin = 1;
 		while (copilot.GetRawButton(1) or IsAutonomous())
 		{
 			Kill;
 			output();
+			double decrement = 1;
+			double n;
 			if (choiceTarget!=-1 and particles->size() < 5)//if there is a target
 			{
-				while (IsAutonomous()/*&& differenceisnottogreat*/ or IsOperatorControl() and copilot.GetRawButton(1))
+				while (IsAutonomous() or copilot.GetRawButton(1))
 				{
 					UpdateCamData();
-					angleDeg=CamData.centerX*54/320;
-					distance=ROBOTRADIUS*angleDeg*2*pi/360;
-					count=distance*PULSESPERROTATION/(WHEELDIAMETER*2*pi);
-					righty.PIDWrite(righty.GetPosition()+count);
-					rightyB.PIDWrite(rightyB.GetPosition()+count);
-					lefty.PIDWrite(lefty.GetPosition()-count);
-					leftyB.PIDWrite(leftyB.GetPosition()-count);
+
+					if (CamData.centerX > -.2 or CamData.centerX < .2)
+					{
+						decrement = n*CamData.centerX*CamData.centerX*CamData.centerX;
+					}
+					if (CamData.centerX < 0)//right
+						leftyrighty(decrement, -decrement);
+					else if (CamData.centerX > 0)//left
+						leftyrighty(-decrement, decrement);
+					if (CamData.centerX > -.5 or CamData.centerX < .5)
+					{
+						leftyrighty(0, 0);
+						return;
+					}
+					if (lefty.GetSpeed() < 0 or righty.GetSpeed() < 0)
+						n++;
 				}
-				//HERE		Turn
-				/*psuedo
-				 * if (!negligibleDifference)
-				 * {
-				 * 		if (right)
-				 * 			left*decrement set
-				 * 		if (left)
-				 * 			right*decrement set
-				 * 	}
-				 * if (difference > minDegreeDifference and difference < maxDegreeDifference)
-				 * 		decrement*=cuberoot(difference)
-				 * Wait(.05);
-				 * if (encodersShowLittleMovement)
-				 * 		speedUp
-				 */
 			}
 		}
 		aimin = 0;

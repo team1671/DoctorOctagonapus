@@ -1,6 +1,9 @@
 #include "WPILib.h"
 //#include "KinectStick.h"
-
+/*
+ * config encoder enabled
+ * encoder sarted in contructor
+ */
 
 #define MAX 50
 #define KP 0.250
@@ -46,10 +49,13 @@ public:
 		righty.SetVoltageRampRate(0.3);
 		rightyB.SetVoltageRampRate(0.3);
 		
+		LTop.EnableControl();
+		LBot.EnableControl();
+		
 		LTop.ChangeControlMode(CANJaguar::kPercentVbus);
 		LBot.ChangeControlMode(CANJaguar::kPercentVbus);
-		//LBot.ConfigEncoderCodesPerRev(ENCCOUNT);
-		//LTop.ConfigEncoderCodesPerRev(ENCCOUNT);
+		LBot.ConfigEncoderCodesPerRev(ENCCOUNT);
+		LTop.ConfigEncoderCodesPerRev(ENCCOUNT);
 		//CANJags currently % (-1 to 1)
 		//LBot.SetPID(KP,KI,KD);
 		//LTop.SetPID(KP,KI,KD);
@@ -75,25 +81,36 @@ public:
 		while (IsOperatorControl())
 		{
 			REDRUM;
-			output();		
+			output();
+//			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "YUNODRIVEBETTER?");
+//			driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "%f",(float)LTop.GetSpeed());
+//			driverOut->PrintfLine(DriverStationLCD::kUser_Line3, "%f",(float)LBot.GetSpeed());	
 
 			if (copilot.GetRawButton(1))
-			{
-				LTop.Set(.3+copilot.GetZ()*.4);
-				LBot.Set(.3+copilot.GetZ()*.4);
+			{	
+				driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "%f",(float)LTop.GetPosition());
+				driverOut->PrintfLine(DriverStationLCD::kUser_Line3, "%f",(float)LBot.GetPosition());	
+				LTop.Set(.18+copilot.GetZ()*.4);
+				LBot.Set(.45+copilot.GetZ()*.4);
 			}
 			else if (copilot.GetRawButton(2))
 			{
-				LTop.Set(.4+copilot.GetZ()*.4);
-				LBot.Set(.4+copilot.GetZ()*.4);
+				driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "%f",(float)LTop.GetSpeed());
+				driverOut->PrintfLine(DriverStationLCD::kUser_Line3, "%f",(float)LBot.GetSpeed());	
+				LTop.Set(.3+copilot.GetZ()*.4);
+				LBot.Set(.5+copilot.GetZ()*.4);
 			}
 			else if (copilot.GetRawButton(3))
 			{
-				LTop.Set(.7+copilot.GetZ()*.1);
+				driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "%f",(float)LTop.GetSpeed());
+				driverOut->PrintfLine(DriverStationLCD::kUser_Line3, "%f",(float)LBot.GetSpeed());	
+				LTop.Set(.45+copilot.GetZ()*.1);
 				LBot.Set(.7+copilot.GetZ()*.1);
 			}
 			else if (copilot.GetRawButton(4))
 			{
+				driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "%f",(float)LTop.GetSpeed());
+				driverOut->PrintfLine(DriverStationLCD::kUser_Line3, "%f",(float)LBot.GetSpeed());	
 				LTop.Set(0);
 				LBot.Set(0);
 			}
@@ -113,7 +130,11 @@ public:
 		if (IsAutonomous())
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "blaarag");
 		else if (IsOperatorControl())
+		{
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "YUNODRIVEBETTER?");
+//			driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "%f",(float)LTop.GetSpeed());
+//			driverOut->PrintfLine(DriverStationLCD::kUser_Line3, "%f",(float)LBot.GetSpeed());	
+		}
 		driverOut->UpdateLCD();
 	}//nom nom nom
 	

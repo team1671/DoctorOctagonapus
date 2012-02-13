@@ -1,18 +1,43 @@
+
+//changes -update
+
+/*
+ * FPS <- right now at 5 but have PID in aim change
+ *
+ * added TOPTARGETH
+ * added BOTTOMTARGETH
+ * 
+ * set approcimation =0 before binary opperation in getdistance
+ * 
+ * -moved below fom decl to updatecamvalues()-
+ * 	BinaryImage *thresholdImage;
+ *	BinaryImage *bigObjectsImage;
+ *	BinaryImage *convexHullImage;
+ *	BinaryImage *filteredImage;
+ *	vector<ParticleAnalysisReport> *particles;
+ */
+
+
+
+
 #include "WPILib.h"
 #include "Vision/RGBImage.h"
 #include "Vision/BinaryImage.h"
 #include "cmath"
 
+#define BOTTOMTARGETH 107.5
+#define TOPTARGETH 31.5
+#define Kill GetWatchdog().Kill();
 #define CAMERAHEIGHT 65
 #define ANGLEOFLAUNCH 60
 #define angle 54
 #define pi 3.14159265358979323846264
-#define RL 245
-#define RH 255
-#define GL 245
-#define GH 255
-#define BL 240
-#define BH 255
+#define RL 200
+#define RH 260
+#define GL 140
+#define GH 210
+#define BL 90
+#define BH 135
 static AxisCamera &eyeOfSauron = AxisCamera::GetInstance("10.16.71.11");
 
 DriverStationLCD* driverOut = DriverStationLCD::GetInstance();
@@ -21,17 +46,9 @@ class DoctaEight : public SimpleRobot
 {	
 
 	Joystick copilot;
-	BinaryImage *thresholdImage;
-	BinaryImage *bigObjectsImage;
-	BinaryImage *convexHullImage;
-	BinaryImage *filteredImage;
-	vector<ParticleAnalysisReport> *particles;
-
-	signed char distanceTarget, choiceTarget;
-	//negate for turning drive, choice target target selected, distance target for getting distance, itt for itterations
 	
+	signed char distanceTarget, choiceTarget;
 	double firstTarget, secondTarget, thirdTarget;
-	//targets (fourth is not one two or three XD), decriment to slow motors as aiming
 
 	bool limitedDistance, cycle, flag, aimin, shootin;
 	//switch between primary and secondary distance tracking based on number of targets
@@ -47,7 +64,7 @@ class DoctaEight : public SimpleRobot
 								fourthY, 
 									area, 
 										height, 
-											distanceYnorm;
+											distanceYnorm; //stairway to heaven
 	}CamData;
 public:
 	DoctaEight::DoctaEight(void):
@@ -55,15 +72,15 @@ public:
 	//controller(USB port)
 	//encoders(AChannel, BChannel)
 	{
-		GetWatchdog().Kill();
+		Kill;
 		
-		driverOut->UpdateLCD();
-		//eyeOfSauron.WriteMaxFPS(30);
 		//eyeOfSauron.WriteBrightness(30);
 		//eyeOfSauron.WriteWhiteBalance(AxisCamera::kWhiteBalance_Hold);
 		//eyeOfSauron.WriteResolution(AxisCamera::kResolution_640x360);
 		//eyeOfSauron.WriteColorLevel(100);
+		
 		//eyeOfSauron.WriteCompression(30);
+		eyeOfSauron.WriteMaxFPS(5);
 		//lower easier on CRIO and harder on cam
 		limitedDistance = 0;
 	}
@@ -71,7 +88,7 @@ public:
 	
 	void DoctaEight::Autonomous(void)
 	{
-		GetWatchdog().Kill();
+		Kill;
 		while (IsAutonomous() && IsEnabled())
 		{
 			output();
@@ -79,7 +96,7 @@ public:
 	}
 	void DoctaEight::OperatorControl(void)
 	{
-		GetWatchdog().Kill();
+		Kill;
 		while (IsOperatorControl() && IsEnabled())
 		{
 			output();
@@ -88,7 +105,7 @@ public:
 	
 	void targetSelect(void)//pick the target to shoot at (highest visible) then the one to distance with
 	{
-		GetWatchdog().Kill();
+		Kill;
 				
 		if (3 == CamData.numTargets or 4 == CamData.numTargets)//if 3 or 4 targets visible
 		{
@@ -136,14 +153,14 @@ public:
 	
 	double fOfX(double x)//part of accurate distance finding in getDistance()
 	{
-		GetWatchdog().Kill();
-		return 	(atan((107.5-CAMERAHEIGHT)/(x)) //angle from top triangle (triangle formed by camera target and line at camera's height)
-				+atan((CAMERAHEIGHT-31.5)/(x))); //angle from bottom triangle
+		Kill;
+		return 	(atan((TOPTARGETH-CAMERAHEIGHT)/(x)) //angle from top triangle (triangle formed by camera target and line at camera's height)
+				+atan((CAMERAHEIGHT-BOTTOMTARGETH)/(x))); //angle from bottom triangle
 	}	
 	
-	void getDistance(double &aproximation)//find distance
+	void getDistance(double &approximation)//find distance
 	{
-		GetWatchdog().Kill();
+		Kill;
 		
 		targetSelect();
 		
@@ -152,7 +169,7 @@ public:
 		{
 			if (limitedDistance == 1)//if must use less accurate tracking
 			{
-				aproximation = 9//half height of target in inches over target to get adjacent
+				approximation = 9//half height of target in inches over target to get adjacent
 								/tan(//tan of this to get opposite over adjacent
 										angle*
 											((CamData.area/24)//to get height in pixels
@@ -166,37 +183,38 @@ public:
 				//107.5 is top target height 31.5 is bottom target height
 				
 				double dotbinary=54;
-				for(int i=0; i<30; i++)//binary approximation-> guesses using 1/2 distances until
-											//tlar(that looks about right) -- function too complex for now
+				approximation=0;
+				for(int i=0; i<30; i++)//binary approximation-> guesses using 1/2 distances until							//tlar(that looks about right) -- function too complex for now
 				{
-				GetWatchdog().Kill();
 				dotbinary/=2; //this is the number which modifies the approximation
-				if(fOfX(aproximation+dotbinary)>theta) //if the value to be added overshoots it does not add
-					aproximation+=dotbinary;
+				if(fOfX(approximation+dotbinary)>theta) //if the value to be added overshoots it does not add
+					approximation+=dotbinary;
 				}
 			}		
 			
 		}
 		if (choiceTarget == -1 or choiceTarget > 4)//if there is no target return -1 to indicate target not found -- must be interpeted in 'shoot'
-			aproximation= -1;
+			approximation= -1;
 	}
 	
 	//numTargets, toCenter, centerY, centerX, firstY, secondY, thirdY, fourthY, area, height, distanceYnorm
 	void UpdateCamData()
 	{
+		Kill;
 		Threshold thresholdRGB(RL,RH,GL,GH,BL,BH);
 		ParticleFilterCriteria2 criteria[] = {{IMAQ_MT_BOUNDING_RECT_WIDTH, 30, 400, false, false},
 											{IMAQ_MT_BOUNDING_RECT_HEIGHT, 40, 400, false, false}};
 		//false Set this element to TRUE to take calibrated measurements.
 		//fales Set this element to TRUE to indicate that a match occurs when the measurement is outside the criteria range
 		
+		
 		ColorImage image(IMAQ_IMAGE_RGB);//make image
 		eyeOfSauron.GetImage(&image);//store camera feed to image
-		thresholdImage = image.ThresholdRGB(thresholdRGB);//abliteration prep
-		bigObjectsImage = thresholdImage->RemoveSmallObjects(false, 2);  // remove small objects (noise)
-		convexHullImage = bigObjectsImage->ConvexHull(false);  // fill in partial and full rectangles
-		filteredImage = convexHullImage->ParticleFilter(criteria, 2);  // find the rectangles
-		particles = filteredImage->GetOrderedParticleAnalysisReports();  // get the results		
+		BinaryImage *thresholdImage = image.ThresholdRGB(thresholdRGB);//abliteration prep
+		BinaryImage *bigObjectsImage = thresholdImage->RemoveSmallObjects(false, 2);  // remove small objects (noise)
+		BinaryImage *convexHullImage = bigObjectsImage->ConvexHull(false);  // fill in partial and full rectangles
+		BinaryImage *filteredImage = convexHullImage->ParticleFilter(criteria, 2);  // find the rectangles
+		vector<ParticleAnalysisReport> *particles = filteredImage->GetOrderedParticleAnalysisReports();  // get the results		
 	
 			targetSelect();
 			ParticleAnalysisReport& par = (*particles)[choiceTarget];//get values for centering from selected target
@@ -224,10 +242,12 @@ public:
 		delete bigObjectsImage;
 		delete thresholdImage;
 		/*for (char i = 0; i < 3; i++)//IF THIS VERSION USED, NEED ARRAY FOR CHOICE TARGET
-		{//DISTANCE APROXIMATION, AND EVERY VARRIABLE MADE IN THIS
+		{//DISTANCE approximation, AND EVERY VARRIABLE MADE IN THIS
+			Kill;
 			int rl,rh,gl,gh,bl,bh, RGB [6] = {rl = RL,rh = RH,gl = GL,gh = GH,bl = BL,bh = BH};
 			for (char e=2; e<6; e=e+2)
 			{
+				Kill;
 				RGB[(i+e)%6] = 0;
 				RGB[(i+e+1)%6] = 255;
 			}
@@ -275,31 +295,34 @@ public:
 		
 	void output (void)
 	{
-		UpdateCamData();
-		int choiceTarget;
-		double aproximation;
-		//GET INFO FROM values()
+		Kill;
+		
 		if (IsAutonomous())
-			driverOut->Printf(DriverStationLCD::kUser_Line1, 1, "Auto");
+			driverOut->Printf(DriverStationLCD::kUser_Line1, 1, "Autonomous");
 		else if (IsOperatorControl())
-			driverOut->Printf(DriverStationLCD::kUser_Line1, 1, "Opp");
+			driverOut->Printf(DriverStationLCD::kUser_Line1, 1, "Operator");
 		
-		driverOut->UpdateLCD();
+		UpdateCamData();
+		double approximation;
+		//GET INFO FROM values()
 		
-		getDistance(aproximation);
+		getDistance(approximation);
 		
-		if (aproximation != -1)
-			driverOut->Printf(DriverStationLCD::kUser_Line3, 2, "Distance: %d", aproximation);
+		if (approximation != -1)
+			driverOut->Printf(DriverStationLCD::kUser_Line3, 1, "Distance: %f", (double)approximation);
 		else if (aimin)
-			driverOut->Printf(DriverStationLCD::kUser_Line5, 2, "Double to 0: %d", CamData.centerX);
+			driverOut->Printf(DriverStationLCD::kUser_Line3, 1, "Double to 0: %f", CamData.centerX);
 		
-		driverOut->Printf(DriverStationLCD::kUser_Line3, 3, "Number of targets: %n", CamData.numTargets);
-		driverOut->Printf(DriverStationLCD::kUser_Line4, 4, "Target selected: %n", choiceTarget);
 		
 		if (choiceTarget == -1)
-			driverOut->Printf(DriverStationLCD::kUser_Line6, 5, "no target");
+			driverOut->Printf(DriverStationLCD::kUser_Line2, 3, "no target");
 		else if (choiceTarget > 4)
-			driverOut->Printf(DriverStationLCD::kUser_Line6, 5, "too many targets");
+			driverOut->Printf(DriverStationLCD::kUser_Line2, 3, "too many targets");
+		else
+		{
+			driverOut->Printf(DriverStationLCD::kUser_Line4, 3, "Number of targets: %d", CamData.numTargets);
+			driverOut->Printf(DriverStationLCD::kUser_Line5, 4, "Target selected: %d", choiceTarget);
+		}
 		driverOut->UpdateLCD();
 	}
 	

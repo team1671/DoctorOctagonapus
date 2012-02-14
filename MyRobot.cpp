@@ -3,16 +3,21 @@
 /*
  * config encoder enabled
  * encoder sarted in contructor
+ * added defined speeds for shooter/launcher
  */
 
-#define MAX 50
-#define KP 0.250
-#define KI 0.015
-#define KD 0.020
-#define kVOLTAGE 12
-#define kENCCOUNT 360
-#define RAMP .3
+#define MAX 2700//max speed for jags in rpm
+#define kENCCOUNT 360//pulses per rotation from encoder
+#define KP 0.250//volts it is allowed to change the jag speed by per unit (was exp determined)
+#define KI 0.015//integral PID is allowed to change KP by
+#define KD 0.020//change PID uses to kill oscillation as nearing target voltage
+#define kVOLTAGE 12//max voltage
+#define RAMP .3//maximum KP + KI per unit <-lower is lower rate of change and vise versa (but KP+KI needs to be within this)
 #define REDRUM GetWatchdog().Kill()
+#define RPMLow 1000 //Speed settings for speed control on shooter/launcher
+#define RPMMid 1200
+#define RPMHigh 1400
+
 
 class DoctaEight : public SimpleRobot
 {	
@@ -22,7 +27,9 @@ class DoctaEight : public SimpleRobot
 	
 	CANJaguar lefty, righty, leftyB, rightyB, intake, arm, LTop, LBot;
 	
-	int outputCounter;
+	int outputCounter, RPMoffset, ShooterState, LTopSpeed, LBotSpeed;
+	
+	bool FlagB5, FlagB6;
 	
 public:
 	DoctaEight::DoctaEight(void):
@@ -101,6 +108,13 @@ public:
 		
 		
 		outputCounter = 0;
+		RPMoffset = 0;
+		ShooterState = 0;
+		LTopSpeed = 0;
+		LBotSpeed = 0;
+		
+		FlagB5 = 0;
+		FlagB6 = 0;
 
 	}
 	
@@ -122,55 +136,103 @@ public:
 			REDRUM;
 			output();
 			
-			outputCounter++;
-			
-			if (outputCounter % 30 == 0){
+			//Set Shooter state and reset RPMoffset if necessary
+			if (copilot.GetRawButton(1)) //BUTTON A
+			{	
 				REDRUM;
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "Top Shooter RPM: %f",(float)LTop.GetSpeed());
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line3, "Bot Shooter RPM: %f",(float)LBot.GetSpeed());	
+				if(ShooterState != 1) 
+				{
+					REDRUM;
+					ShooterState = 1;	
+					RPMoffset = 0;
+				}
 			}
-			
-			if (outputCounter % 70 == 0){
-				REDRUM;
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line4, "Top CANJag Temp: %f Celcius",LTop.GetTemperature()*(9/5) + 32);
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line5, "Bot CANJag Temp: %f Celcius",LBot.GetTemperature()*(9/5) + 32);	
-			}
-			
-			if (copilot.GetRawButton(1))
-			{		
-				REDRUM;
-//				LTop.Set(.18+copilot.GetZ()*.4);
-//				LBot.Set(.45+copilot.GetZ()*.4);
-				LTop.Set(1000);
-				LBot.Set(1200);
-			}
-			else if (copilot.GetRawButton(2))
+			else if (copilot.GetRawButton(2)) //BUTTON B
 			{
 				REDRUM;
-				//LTop.Set(.3+copilot.GetZ()*.4);
-				//LBot.Set(.5+copilot.GetZ()*.4);
-				LTop.Set(800);
-				LBot.Set(1000);
+				if(ShooterState != 2) 
+				{
+					REDRUM;
+					ShooterState = 2;	
+					RPMoffset = 0;
+				}
 			}
-			else if (copilot.GetRawButton(3))
+			else if (copilot.GetRawButton(3)) //BUTTON X
 			{
 				REDRUM;
-//				LTop.Set(.45+copilot.GetZ()*.1);
-//				LBot.Set(.7+copilot.GetZ()*.1);
-				LTop.Set(1200);
-				LBot.Set(1400);
+				if(ShooterState != 3) 
+				{
+					REDRUM;
+					ShooterState = 3;	
+					RPMoffset = 0;
+				}
 			}
-			else if (copilot.GetRawButton(4))
+			else if (copilot.GetRawButton(4)) //BUTTON Y
 			{
 				REDRUM;
-				LTop.Set(0);
-				LBot.Set(0);
+				if(ShooterState != 4) 
+					{
+						REDRUM;
+						ShooterState = 4;	
+						RPMoffset = 0;
+					}
 			}
+			
+			//increment or decrement RPMoffset
+			if(copilot.GetRawButton(5)) //BUTTON LB
+			{
+				REDRUM;
+				FlagB5 = true;
+			}
+			else if(copilot.GetRawButton(6)) //BUTTON RB
+			{
+				REDRUM;
+				FlagB6 = true;
+			}
+			
+			if(FlagB5 == true && copilot.GetRawButton(5) == false)
+			{
+				REDRUM;
+				RPMoffset -= 50;
+				FlagB5 = false;
+			}
+			else if(FlagB6 && !copilot.GetRawButton(6))
+			{
+				REDRUM;
+				RPMoffset += 50;
+				FlagB6 = false;
+			}
+			
+			//prepare shooter/launcher ouput speed
+			if(ShooterState == 1) { 
+				REDRUM;		//BUTTON A
+				LTopSpeed = MAX/12;
+				LBotSpeed = RPMMid + RPMoffset;
+			}
+			else if(ShooterState == 2) { //BUTTON B
+				REDRUM;
+				LTopSpeed = MAX/12;
+				LBotSpeed = RPMLow + RPMoffset;
+			}
+			else if(ShooterState == 3) { //BUTTON X
+				REDRUM;
+				LTopSpeed = MAX/12;
+				LBotSpeed = RPMHigh + RPMoffset;
+			}
+			else if(ShooterState == 4) { //BUTTON Y
+				REDRUM;
+				LTopSpeed = 0;
+				LBotSpeed = 0;
+			}
+			
+			//set shooter launcher speed to CANJags                                                  
+			LTop.Set(LTopSpeed);
+			LBot.Set(LBotSpeed);
+			
 			
 			//move simple platform arm
-			leftyrighty(-pilot.GetY(), -pilot.GetTwist());
+			leftyrighty(-pilot.GetY(), -pilot.GetRawAxis(4));
 			intake.Set(-copilot.GetY());
-			
 		}
 		//stops encoders
 	}
@@ -182,11 +244,23 @@ public:
 		if (IsAutonomous())
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "blaarag");
 		else if (IsOperatorControl())
-		{	REDRUM;
-	//		driverOut->PrintfLine(DriverStationLCD::kUser_Line1, "YUNODRIVEBETTER?");
-//			driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "%f",(float)LTop.GetSpeed());
-//			driverOut->PrintfLine(DriverStationLCD::kUser_Line3, "%f",(float)LBot.GetSpeed());	
+		{	
+			REDRUM;
 		}
+		outputCounter++;
+					
+					if (outputCounter % 30 == 0){
+						REDRUM;
+					driverOut->PrintfLine(DriverStationLCD::kUser_Line2, "Top Shooter RPM: %f",(float)LTop.GetSpeed());
+					driverOut->PrintfLine(DriverStationLCD::kUser_Line3, "Bot Shooter RPM: %f",(float)LBot.GetSpeed());	
+					}
+					
+					if (outputCounter % 60 == 0){
+						REDRUM;
+					driverOut->PrintfLine(DriverStationLCD::kUser_Line4, "Top CANJag Temp: %f Celcius",LTop.GetTemperature()*(9/5) + 32);
+					driverOut->PrintfLine(DriverStationLCD::kUser_Line5, "Bot CANJag Temp: %f Celcius",LBot.GetTemperature()*(9/5) + 32);
+				    outputCounter = 1;
+					}
 		driverOut->UpdateLCD();
 	}//nom nom nom
 	

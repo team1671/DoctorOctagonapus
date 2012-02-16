@@ -90,7 +90,8 @@ class DoctaEight : public SimpleRobot
 		//MAXIMUM
 		//V CHANGE
 
-										//OR I + P
+        //OR I + P
+
 		///INTERGER INITIALIZE
 		outputCounter = 0;
 		RPMoffset = 0;

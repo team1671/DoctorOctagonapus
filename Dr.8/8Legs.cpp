@@ -1,8 +1,16 @@
-#include"Doc8.h"
+#include"Vrisk.h"
 
 void DoctaEight::tardis(void)
 {
 	Kill;
+	
+
+	
+	arm.Set(copilot.GetTwist());
+	//move simple platform arm
+	
+	intake.Set(copilot.GetY());
+	
 	if (pilot.GetRawButton(1) && cycle == 0)
 	{
 		negate *= -1;
@@ -61,7 +69,7 @@ void DoctaEight::tardis(void)
 	}
 	else if (drive == 3)
 	{
-		leftyrighty(negate*pilot.GetY(), negate*pilot.GetRawAxis(4));
+		leftyrighty(-negate*pilot.GetY(), -negate*pilot.GetRawAxis(4));
 	}
 }
 

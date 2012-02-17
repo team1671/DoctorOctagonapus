@@ -1,4 +1,4 @@
-#include"Doc8.h"
+#include"Vrisk.h"
 
 void DoctaEight::aim()
 {
@@ -6,14 +6,15 @@ void DoctaEight::aim()
 	//robot width-33			//inches
 	//robot length-18			//inches
 	
+	//say stuff
+	
 	aimin = 1;
 	while (copilot.GetRawButton(1) or IsAutonomous())
 	{
 		Kill;
-		output();
 		double decrement = 1;
 		double n;
-		if (choiceTarget!=-1 and particles->size() < 5)//if there is a target
+		if (choiceTarget!=-1 and CamData.numTargets < 5)//if there is a target
 		{
 			while (IsAutonomous() or copilot.GetRawButton(1))
 			{
@@ -42,16 +43,17 @@ void DoctaEight::aim()
 
 void DoctaEight::shoot(void)
 {
+	//say stuff
 	Kill;
 	shootin =1;
 	double approximation = 0;
 	while (approximation != -1 && copilot.GetRawButton(2))//while in aim() should count also
 	{
-		getDistance(approximation);
+		
 		/*
-		 * approximation
+		 * CamValues.approx
 		 * CAMERAHEIGHT
-		 * ANGLEOFLAUNCH
+		 * kANGLEOFLAUNCH
 		 * 
 		 * double X = [(V^2)/g * (Squrt(3)/2)]+23.09in
 		 * 

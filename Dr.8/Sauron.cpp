@@ -43,6 +43,41 @@ void DoctaEight::UpdateCamData()
 
 		static Threshold threshold(HUL,HUH,SAL,SAH,LUL,LUH);
 		BinaryImage *thresholdHSL = image.ThresholdHSL(threshold);
+		{
+		    int pParameter[1] = {49};
+		    float plower[1] = {30};
+		    float pUpper[1] = {60};
+		    int pCalibrated[1] = {0};
+		    int pExclude[1] = {0};
+		    
+		    int criteriaCount=1;
+		    int rejectMatches=FALSE;
+		    int connectivity=TRUE;
+			
+		    ParticleFilterCriteria2* Criteria = NULL;
+		    ParticleFilterOptions Options;
+		    int numParticles;
+
+		    if (criteriaCount > 0)
+		    {
+		        Criteria = (ParticleFilterCriteria2*)malloc(criteriaCount * sizeof(ParticleFilterCriteria2));
+		        
+		        Criteria[0].parameter = pParameter[0];
+		        Criteria[0].lower = plower[0];
+		        Criteria[0].upper = pUpper[0];
+		        Criteria[0].calibrated = pCalibrated[0];
+		        Criteria[0].exclude = pExclude[0];
+		     
+		        Options.rejectMatches = rejectMatches;
+		        Options.rejectBorder = 0;
+		        Options.connectivity8 = connectivity;
+		        
+		        // Filters particles based on their morphological measurements.
+		        imaqParticleFilter3(image, image, NULL, 1, &Options, NULL, NULL);
+		    }
+		    free(Criteria);
+		}
+		
 		vector<ParticleAnalysisReport> *particles = thresholdHSL ->GetOrderedParticleAnalysisReports();
 		delete thresholdHSL;
 		

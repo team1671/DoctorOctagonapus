@@ -75,6 +75,8 @@ void DoctaEight::Autonomous(void)
 	while (IsAutonomous() && IsEnabled())
 	{
 		UpdateCamData();
+		aim();//funcs called in- will select terget
+		shoot();//funcs called in- will get dist and therefore select target
 	}
 }
 void DoctaEight::OperatorControl(void)
@@ -104,9 +106,9 @@ void DoctaEight::output (void)
 	else if (IsOperatorControl())
 		driverOut->Printf(DriverStationLCD::kUser_Line1, 1, "Operator");
 
-	if (CamData.HP == -1)
+	if (CamData.numTargets == -1)
 		driverOut->Printf(DriverStationLCD::kUser_Line2, 1, "no target");
-	else if (CamData.LP > 4)
+	else if (CamData.numTargets > 4)
 		driverOut->Printf(DriverStationLCD::kUser_Line2, 1, "too many targets");
 	else
 	{								//TRY I

@@ -81,23 +81,6 @@ void DoctaEight::UpdateCamData()
 		else
 			CamData.approx = -1;
 		
-		if (IsAutonomous())
-		{
-			aim();//funcs called in- will select terget
-			shoot();//funcs called in- will get dist and therefore select target
-		}
-		else
-		{
-			if (copilot.GetRawButton(1))
-			{
-				aim();//funcs called in- will select target
-			}
-			if (copilot.GetRawButton(2))
-			{
-				shoot();
-			}
-		}
-		
 		output();
 		
 		delete particles;

@@ -1,33 +1,112 @@
-#include "WPILib.h"
-#include "KinectStick.h"
-#define Kill GetWatchdog().Kill();
+#include"head.h"
 
-#define kVOLTAGE 12.0
-#define RAMP 0
-#define MAX 2750
-#define KP 0.250//proportion for jags
-#define KI 0.015//integral change in proportion
-#define KD 0.020//damper
-#define kENCCOUNT 360
-
-//#define dsio DriverStation::GetInstance()->GetEnhancedIO()
-
-class DoctaEight : public SimpleRobot
+void DoctaEight::tardis(void)
 {
-	Joystick pilot, copilot;
-	//	KinectStick *leftArm, *rightArm;
-	CANJaguar lefty, righty, leftyB, rightyB, intake, arm, LTop, LBot;
-	signed char negate, drive;
-	bool limitedDistance, cycle, flag;
+	Kill;
 	
+	{
+		if (copilot.GetRawButton(1))
+		{
+			LBot.Set(0);
+			LTop.Set(0);
+		}
+		else if (copilot.GetRawButton(2))
+		{
+			LBot.Set(-1200);
+			LTop.Set(1000);
+		}
+		else if (copilot.GetRawButton(3))
+		{
+			LBot.Set(-1500);
+			LTop.Set(1300);
+		}
+		else if (copilot.GetRawButton(4))
+		{
+			LBot.Set(-2000);
+			LTop.Set(1700);
+		}
+		
+//		double ptop = (dsio.GetAnalogInRatio(1) - 0.5) * MAX;
+//		double pbot = (dsio.GetAnalogInRatio(2) - 0.5) * MAX;
+		
+//		LTop.Set(ptop);
+//		LBot.Set(pbot);
+		
+	}
+
 	
-public:
-///////////////////////CORE
-		 DoctaEight(void);
-	void Autonomous(void);
-	void OperatorControl(void);
-	void output(void);
-///////////////////////DRIVE
-	void tardis(void);
-	void leftyrighty(double left, double right);//set drive motors on either side
-};
+	arm.Set(copilot.GetTwist());
+	//move simple platform arm
+	
+	intake.Set(-copilot.GetY());
+	
+	if (pilot.GetRawButton(1) && cycle == 0)
+	{
+		negate *= -1;
+		cycle = 1;
+	}
+	else if (pilot.GetRawButton(4) && cycle == 0)
+	{
+		drive = (drive + 2)%4;//	Change to plus 1 for kinect drive be included
+		cycle = 1;
+	}
+	else if (!pilot.GetRawButton(1) && !pilot.GetRawButton(4))
+		cycle = 0;
+	//to reverse drive			
+	
+	if (drive == 1)
+	{
+		if (pilot.GetY() > .01 && pilot.GetTwist() >= 0)
+		{
+			if (negate == 1)
+				leftyrighty(negate*(pilot.GetY() - pilot.GetTwist()*2*pilot.GetY()), negate*pilot.GetY());
+			else
+				leftyrighty(negate*pilot.GetY(), negate*(pilot.GetY() - pilot.GetTwist()*2*pilot.GetY()));
+		}
+		else if (pilot.GetY() > .01 && pilot.GetTwist() <= 0)
+		{
+			if (negate ==1)
+				leftyrighty(negate*pilot.GetY(), negate*(pilot.GetY() + pilot.GetTwist()*2*pilot.GetY()));
+			else
+				leftyrighty(negate*(pilot.GetY() + pilot.GetTwist()*2*pilot.GetY()), negate*pilot.GetY());
+		}		
+		else if (pilot.GetY() < -.01 && pilot.GetTwist() >= 0)
+		{
+			if (negate == 1)
+				leftyrighty(negate*(pilot.GetY() - pilot.GetTwist()*2*pilot.GetY()), negate*pilot.GetY());
+			else
+				leftyrighty(negate*pilot.GetY(), negate*(pilot.GetY() - pilot.GetTwist()*2*pilot.GetY()));
+		}
+		else if (pilot.GetY() < -.01 && pilot.GetTwist() <= 0)
+		{
+			if (negate == 1)
+				leftyrighty(negate*pilot.GetY(), negate*(pilot.GetY() + pilot.GetTwist()*2*pilot.GetY()));
+			else
+				leftyrighty(negate*(pilot.GetY() + pilot.GetTwist()*2*pilot.GetY()), negate*pilot.GetY());
+		}
+		else
+		{
+			if (negate == 1)
+				leftyrighty(negate*pilot.GetTwist(), negate*(-pilot.GetTwist()));
+			else
+				leftyrighty(negate*(-pilot.GetTwist()), negate*pilot.GetTwist());
+		}
+	}
+	else if (drive == 2)
+	{
+		//leftyrighty (leftArm -> GetY(), rightArm -> GetTwist());
+	}
+	else if (drive == 3)
+	{
+		leftyrighty(-negate*pilot.GetY(), -negate*pilot.GetRawAxis(4));
+	}
+}
+
+void DoctaEight::leftyrighty(double left, double right)//set drive motors on either side
+{
+	Kill;
+	righty.Set(right);
+	rightyB.Set(right);
+	lefty.Set(left);
+	leftyB.Set(left);
+}

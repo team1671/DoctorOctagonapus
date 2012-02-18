@@ -24,20 +24,20 @@ void DoctaEight::UpdateCamData()
 		elems->matrixCols = 3;
 		elems->matrixRows = 3;
 		elems->hexa = FALSE;
-		Image *processedImage = imaqCreateImage(IMAQ_IMAGE_U8, 0);
-		imaqMorphology(processedImage, thresholdImage->GetImaqImage(), IMAQ_CLOSE, elems);
+		BinaryImage *processedImage;
+		imaqMorphology(processedImage->GetImaqImage(), thresholdImage->GetImaqImage(), IMAQ_CLOSE, elems);
 		delete &thresholdImage;
-			Image *filteredImage = imaqCreateImage(IMAQ_IMAGE_U8, 0);
+			BinaryImage *filteredImage;
 			ParticleFilterOptions Options;
 				ParticleFilterCriteria2 Criteria[] = {IMAQ_MT_AREA_BY_PARTICLE_AND_HOLES_AREA, LCRIT, HCRIT, false, false};
 				Options.rejectMatches = FALSE;
 				Options.rejectBorder = 0;
 				Options.connectivity8 = TRUE;
-				imaqParticleFilter3(filteredImage, processedImage, Criteria, 1, &Options, NULL, NULL);
-				imaqDispose(processedImage);
-			free(Criteria);
+				imaqParticleFilter3(filteredImage->GetImaqImage(), processedImage->GetImaqImage(), Criteria, 1, &Options, NULL, NULL);
+			free(Criteria);	
 		vector<ParticleAnalysisReport> *particles = filteredImage->GetOrderedParticleAnalysisReports();
-		imaqDispose(filteredImage);
+		imaqDispose(filteredImage->GetImaqImage());
+		imaqDispose(processedImage->GetImaqImage());
 		
 		ParticleAnalysisReport *high;
 		ParticleAnalysisReport *particle;

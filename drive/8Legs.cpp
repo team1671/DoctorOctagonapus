@@ -9,7 +9,7 @@ void DoctaEight::tardis(void)
 		rotes=1;
 		if(copilot.GetRawButton(9))
 			bigArse+= 100;
-		else
+		else if (!copilot.GetRawButton(9) && !copilot.GetRawButton(9))
 			bigArse-= 100;
 	}
 	else

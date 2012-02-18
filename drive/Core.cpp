@@ -55,6 +55,9 @@ LBot(6)
 //	leftyB.EnableControl();
 //	lefty.EnableControl();
 
+	
+	bigArse=0;
+	rotes= 0;
 	negate = 1;
 	drive =3;
 }

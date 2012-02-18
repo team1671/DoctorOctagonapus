@@ -7,7 +7,7 @@ void DoctaEight::tardis(void)
 	arm.Set(copilot.GetTwist());
 	//move simple platform arm
 	
-	intake.Set(copilot.GetY());
+	intake.Set(-copilot.GetY());
 	
 	if (pilot.GetRawButton(1) && cycle == 0)
 	{

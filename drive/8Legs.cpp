@@ -4,6 +4,17 @@ void DoctaEight::tardis(void)
 {
 	Kill;
 	
+	if (!rotes && copilot.GetRawButton(9) or copilot.GetRawButton(10) < -.1 && !rotes)
+	{
+		rotes=1;
+		if(copilot.GetRawButton(9))
+			bigArse+= 100;
+		else
+			bigArse-= 100;
+	}
+	else
+		rotes = 0;
+	
 	{
 		if (copilot.GetRawButton(1))
 		{
@@ -12,18 +23,18 @@ void DoctaEight::tardis(void)
 		}
 		else if (copilot.GetRawButton(2))
 		{
-			LBot.Set(-1200);
-			LTop.Set(1000);
+			LBot.Set(-1400+bigArse);
+			LTop.Set(450+bigArse);
 		}
 		else if (copilot.GetRawButton(3))
 		{
-			LBot.Set(-1500);
-			LTop.Set(1300);
+			LBot.Set(-1800+bigArse);
+			LTop.Set(1600+bigArse);
 		}
 		else if (copilot.GetRawButton(4))
 		{
-			LBot.Set(-2000);
-			LTop.Set(1700);
+			LBot.Set(-1800+bigArse);
+			LTop.Set(1000+bigArse);
 		}
 		
 //		double ptop = (dsio.GetAnalogInRatio(1) - 0.5) * MAX;

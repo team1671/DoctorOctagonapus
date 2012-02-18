@@ -18,7 +18,8 @@ class DoctaEight : public SimpleRobot
 	//	KinectStick *leftArm, *rightArm;
 	CANJaguar lefty, righty, leftyB, rightyB, intake, arm, LTop, LBot;
 	signed char negate, drive;
-	bool limitedDistance, cycle, flag;
+	long signed int bigArse;
+	bool limitedDistance, cycle, flag, rotes;
 	
 	
 public:

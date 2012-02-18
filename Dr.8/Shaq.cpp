@@ -12,6 +12,7 @@ void DoctaEight::aim()
 	while (copilot.GetRawButton(1) or IsAutonomous())
 	{
 		Kill;
+		UpdateCamData();
 		output();
 		double decrement = 1;
 		double n;
@@ -51,6 +52,7 @@ void DoctaEight::shoot(void)
 	double approximation = 0;
 	while (approximation != -1 && copilot.GetRawButton(2))//while in aim() should count also
 	{
+		UpdateCamData();
 		output();
 		
 		/*
@@ -58,8 +60,6 @@ void DoctaEight::shoot(void)
 		 * CAMERAHEIGHT
 		 * kANGLEOFLAUNCH
 		 * 
-		 BOTTOM JAG MUST BE NEGATIVE
-		 
 		 * double X = [(V^2)/g * (Squrt(3)/2)]+23.09in
 		 * 
 		 * setjags(returns of F(X))//F() exp function
@@ -67,6 +67,8 @@ void DoctaEight::shoot(void)
 		 * while (encoders show motors below speed)
 		 * 		speed motors
 		 *		output();
+		 *		
+		 * BOTTOM JAGS MUST BE NEGATIVE
 		 * 
 		 * remember not need select target as will in get dist
 		 */

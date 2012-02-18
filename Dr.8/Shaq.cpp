@@ -58,6 +58,8 @@ void DoctaEight::shoot(void)
 		 * CAMERAHEIGHT
 		 * kANGLEOFLAUNCH
 		 * 
+		 BOTTOM JAG MUST BE NEGATIVE
+		 
 		 * double X = [(V^2)/g * (Squrt(3)/2)]+23.09in
 		 * 
 		 * setjags(returns of F(X))//F() exp function

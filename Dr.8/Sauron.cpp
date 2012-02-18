@@ -2,10 +2,6 @@
 
 void DoctaEight::UpdateCamData()
 {
-
-	//ParticleFilterCriteria2 criteria[] = {
-	//									{IMAQ_MT_BOUNDING_RECT_WIDTH, 10, 200, false, false},
-	//									{IMAQ_MT_BOUNDING_RECT_HEIGHT, 10, 200, false, false}};
 	ColorImage image(IMAQ_IMAGE_RGB);
 	if (eyeOfSauron.IsFreshImage())//if latest from cam not recieved
 	{
@@ -13,79 +9,40 @@ void DoctaEight::UpdateCamData()
 	}
 	else
 	{
-		/*
-		Image* BCG = image.GetImaqImage();
+		static Threshold threshold(RH,RL,GH,GL,BH,BL);
+//		Image* BCG = image.GetImaqImage();
+//		delete &image;
+//		static BCGOptions bcg;
+//			bcg.brightness = BS;
+//			bcg.contrast = CT;
+//			bcg.gamma = GA;
+//			imaqBCGTransform(BCG, BCG, &bcg, NULL);
+		BinaryImage *thresholdImage = image.ThresholdRGB(threshold);
 		delete &image;
-		BCGOptions bcg;
-		bcg.brightness = BS;
-		bcg.contrast = CT;
-		bcg.gamma = GA;
-		imaqBCGTransform(BCG, BCG, &bcg, NULL);
-		//note-can use above to sep particles then get rid of smaller than target size at furthest range
-		HSLImage *thresholdLUM = BCG->ThresholdHSL(1,2,1,2,1,2);
-		delete &BCG;
-		MonoImage* luminance = thresholdLUM->GetLuminancePlane();
-		 delete thresholdLUM;
-		imaqDispose(BCG);
-		image.ReplaceRedPlane(luminance);
-		image.ReplaceGreenPlane(luminance);
-		image.ReplaceBluePlane(luminance);
-		BinaryImage *thresholdImage = BCG->ThresholdRGB(threshold);
-		BinaryImage *binImg = luminance;
-			delete luminance;
-		 imaqConvexHull(binImg->GetImaqImage(),binImg->GetImaqImage(),1);
-		BinaryImage *bigObjectsImage = binImg->RemoveSmallObjects(false, 2);
-		delete binImg;
-		BinaryImage *convexHullImage = bigObjectsImage->ConvexHull(false);
-		delete bigObjectsImage;
-		BinaryImage *filteredImage = convexHullImage->ParticleFilter(criteria, 2);
-		delete convexHullImage;*/
-
-		static Threshold threshold(HUL,HUH,SAL,SAH,LUL,LUH);
-		BinaryImage *thresholdHSL = image.ThresholdHSL(threshold);
-		{
-		    int pParameter[1] = {49};
-		    float plower[1] = {30};
-		    float pUpper[1] = {60};
-		    int pCalibrated[1] = {0};
-		    int pExclude[1] = {0};
-		    
-		    int criteriaCount=1;
-		    int rejectMatches=FALSE;
-		    int connectivity=TRUE;
-			
-		    ParticleFilterCriteria2* Criteria = NULL;
-		    ParticleFilterOptions Options;
-		    int numParticles;
-
-		    if (criteriaCount > 0)
-		    {
-		        Criteria = (ParticleFilterCriteria2*)malloc(criteriaCount * sizeof(ParticleFilterCriteria2));
-		        
-		        Criteria[0].parameter = pParameter[0];
-		        Criteria[0].lower = plower[0];
-		        Criteria[0].upper = pUpper[0];
-		        Criteria[0].calibrated = pCalibrated[0];
-		        Criteria[0].exclude = pExclude[0];
-		     
-		        Options.rejectMatches = rejectMatches;
-		        Options.rejectBorder = 0;
-		        Options.connectivity8 = connectivity;
-		        
-		        // Filters particles based on their morphological measurements.
-		        imaqParticleFilter3(image, image, NULL, 1, &Options, NULL, NULL);
-		    }
-		    free(Criteria);
-		}
-		
-		vector<ParticleAnalysisReport> *particles = thresholdHSL ->GetOrderedParticleAnalysisReports();
-		delete thresholdHSL;
-		
+//		imaqDispose(BCG);
+		StructuringElement* elems;
+		elems->matrixCols = 3;
+		elems->matrixRows = 3;
+		elems->hexa = FALSE;
+		Image *processedImage = imaqCreateImage(IMAQ_IMAGE_U8, 0);
+		imaqMorphology(processedImage, thresholdImage->GetImaqImage(), IMAQ_CLOSE, elems);
+		delete &thresholdImage;
+			Image *filteredImage = imaqCreateImage(IMAQ_IMAGE_U8, 0);
+			ParticleFilterOptions Options;
+				ParticleFilterCriteria2 Criteria[] = {IMAQ_MT_AREA_BY_PARTICLE_AND_HOLES_AREA, LCRIT, HCRIT, false, false};
+				Options.rejectMatches = FALSE;
+				Options.rejectBorder = 0;
+				Options.connectivity8 = TRUE;
+				imaqParticleFilter3(filteredImage, processedImage, Criteria, 1, &Options, NULL, NULL);
+				imaqDispose(processedImage);
+			free(Criteria);
+		vector<ParticleAnalysisReport> *particles = filteredImage->GetOrderedParticleAnalysisReports();
+		imaqDispose(filteredImage);
 		
 		ParticleAnalysisReport *high;
 		ParticleAnalysisReport *particle;
 		ParticleAnalysisReport *low;
-		for (unsigned int i = 1; i <= particles->size(); i++)
+		for (unsigned int i = 1; 5 > i && i <= particles->size(); i++)
 		{
 			particle = &(particles)->at(i);
 			if(particle->center_mass_y_normalized > high->center_mass_y_normalized)
@@ -96,7 +53,7 @@ void DoctaEight::UpdateCamData()
 			delete particle;
 		}
 		
-		for (unsigned int i = 1; i <= particles->size(); i++)
+		for (unsigned int i = 1; 5 > i && i <= particles->size(); i++)
 		{
 			particle = &(particles)->at(i);
 			if(particle->center_mass_y_normalized < low->center_mass_y_normalized)

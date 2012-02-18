@@ -12,6 +12,7 @@ void DoctaEight::aim()
 	while (copilot.GetRawButton(1) or IsAutonomous())
 	{
 		Kill;
+		output();
 		double decrement = 1;
 		double n;
 		if (choiceTarget!=-1 and CamData.numTargets < 5)//if there is a target
@@ -19,6 +20,7 @@ void DoctaEight::aim()
 			while (IsAutonomous() or copilot.GetRawButton(1))
 			{
 				UpdateCamData();
+				output();
 
 				if (CamData.centerX > -.2 or CamData.centerX < .2)
 				{
@@ -49,6 +51,7 @@ void DoctaEight::shoot(void)
 	double approximation = 0;
 	while (approximation != -1 && copilot.GetRawButton(2))//while in aim() should count also
 	{
+		output();
 		
 		/*
 		 * CamValues.approx
@@ -61,6 +64,7 @@ void DoctaEight::shoot(void)
 		 * 
 		 * while (encoders show motors below speed)
 		 * 		speed motors
+		 *		output();
 		 * 
 		 * remember not need select target as will in get dist
 		 */

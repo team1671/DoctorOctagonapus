@@ -9,6 +9,17 @@ void DoctaEight::tardis(void)
 	
 	intake.Set(-copilot.GetY());
 	
+
+	if (copilot.GetRawButton(1))
+	{
+		aim();//funcs called in- will select target
+	}
+	if (copilot.GetRawButton(2))
+	{
+		shoot();
+	}
+	
+	
 	if (pilot.GetRawButton(1) && cycle == 0)
 	{
 		negate *= -1;

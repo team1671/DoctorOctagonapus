@@ -4,8 +4,6 @@ void DoctaEight::tardis(void)
 {
 	Kill;
 	
-
-	
 	arm.Set(copilot.GetTwist());
 	//move simple platform arm
 	
@@ -18,7 +16,7 @@ void DoctaEight::tardis(void)
 	}
 	else if (pilot.GetRawButton(4) && cycle == 0)
 	{
-		drive = drive%4 + 2;//	Change to plus 1 for kinect drive be included
+		drive = (drive + 2)%4;//	Change to plus 1 for kinect drive be included
 		cycle = 1;
 	}
 	else if (!pilot.GetRawButton(1) && !pilot.GetRawButton(4))
@@ -63,9 +61,9 @@ void DoctaEight::tardis(void)
 				leftyrighty(negate*(-pilot.GetTwist()), negate*pilot.GetTwist());
 		}
 	}
-	else if (drive == 2)
+	else if (drive == 2)//currently skipping cause kinect not up
 	{
-		//leftyrighty (leftArm -> GetY(), rightArm -> GetTwist());
+		leftyrighty(leftArm -> GetY(), rightArm -> GetTwist());
 	}
 	else if (drive == 3)
 	{

@@ -257,7 +257,7 @@ public:
 			ParticleFilterCriteria2 criteria[] = {{IMAQ_MT_BOUNDING_RECT_WIDTH, 30, 400, false, false},
 												{IMAQ_MT_BOUNDING_RECT_HEIGHT, 40, 400, false, false}};
 			//false Set this element to TRUE to take calibrated measurements.
-			//fales Set this element to TRUE to indicate that a match occurs when the measurement is outside the criteria range
+			//false Set this element to TRUE to indicate that a match occurs when the measurement is outside the criteria range
 			
 			ColorImage image(IMAQ_IMAGE_RGB);//make image
 			eyeOfSauron.GetImage(&image);//store camera feed to image

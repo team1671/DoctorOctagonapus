@@ -52,7 +52,7 @@ public:
 		GetWatchdog().Kill();
 		while(IsEnabled() && IsAutonomous())
 		{
-			myCD->SpeedTest();
+			myCD->Test();
 		}
 	}
 

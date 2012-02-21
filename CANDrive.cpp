@@ -37,11 +37,11 @@ void CANDrive::GetValues(float &_LF, float &_LB, float &_RF, float &_RB)
 //SETTING VALUES
 void CANDrive::SetValues(float _fLeftFront, float _fRightFront, float _fLeftBack, float _fRightBack)
 {
-	m_canLeftFront->Set(_fLeftFront);
-	m_canRightFront->Set(_fRightFront);
-	m_canLeftBack->Set(_fLeftBack);
-	m_canRightBack->Set(_fRightBack);
-	
+	int negate=(m_bReversed)?(-1):(1);
+	m_canLeftFront->Set(_fLeftFront*negate);
+	m_canRightFront->Set(_fRightFront*negate);
+	m_canLeftBack->Set(_fLeftBack*negate);
+	m_canRightBack->Set(_fRightBack*negate);
 };
 
 void CANDrive::SetReversed(bool _bReverse)
@@ -52,18 +52,8 @@ void CANDrive::SetReversed(bool _bReverse)
 //TANK DRIVE
 void CANDrive::TankDrive(float _fLeftSpeed, float _fRightSpeed)
 {
-	m_canRightBack->ChangeControlMode(CANJaguar::kPercentVbus);
-	m_canLeftBack->ChangeControlMode(CANJaguar::kPercentVbus);
-	m_canRightFront->ChangeControlMode(CANJaguar::kPercentVbus);
-	m_canLeftFront->ChangeControlMode(CANJaguar::kPercentVbus);
-	
-	if(m_bReversed)
-	{
-		SetValues(_fLeftSpeed, _fRightSpeed, _fLeftSpeed, _fRightSpeed);
-	} else
-	{
-		SetValues(-_fRightSpeed, -_fLeftSpeed, -_fRightSpeed, -_fLeftSpeed);
-	}
+	ChangeControlMode(CANJaguar::kPercentVbus);
+	SetValues(_fLeftSpeed, _fRightSpeed, _fLeftSpeed, _fRightSpeed);
 };
 
 void CANDrive::SetPID(float _Kp, float _Ki, float _Kd)
@@ -74,18 +64,27 @@ void CANDrive::SetPID(float _Kp, float _Ki, float _Kd)
 	m_canRightBack->SetPID(_Kp, _Ki, _Kd);
 };
 
-void CANDrive::DistDrive(float _fLeftDist, float _fRightDist)
+bool CANDrive::DistDrive(float _fLeftDist, float _fRightDist)
 {
-//	m_canRightBack->ChangeControlMode(CANJaguar::kPosition);
-//	m_canLeftBack->ChangeControlMode(CANJaguar::kPosition);
-//	m_canRightFront->ChangeControlMode(CANJaguar::kPosition);
-//	m_canLeftFront->ChangeControlMode(CANJaguar::kPosition);
-//		
-//	m_canLeftFront->Set(m_fLeftPosition + _fLeftDist);
-//	m_canRightFront->Set(m_fRightPosition + _fRightDist);
-//	m_canLeftBack->Set(m_fLeftPosition + _fLeftDist);
-//	m_canRightBack->Set(m_fRightPosition + _fRightDist);
+	float inchestopulses=1/*inch*//(3.14159/*pi*/*4.125/*wheel diameter*/);
+	if(GetControlMode()!=CANJaguar::kPosition)
+	{
+		ChangeControlMode(CANJaguar::kPosition);
+		m_canLeftFront->EnableControl();
+		m_canRightFront->EnableControl();
+		m_canLeftBack->EnableControl();
+		m_canRightBack->EnableControl();
+	}
+	float LRots=_fLeftDist*inchestopulses;//DONT REMOVE ABBREVATIONS!
+	float RRots=_fRightDist*inchestopulses;
+	m_canLeftFront->Set(LRots);
+	m_canRightFront->Set(RRots);
+	m_canLeftBack->Set(LRots);
+	m_canRightBack->Set(Rots);
+	m_canLeftFront->GetPosition();
+	//if(()||()||()||())
 };
+
 void CANDrive::TankDrive(Joystick *_stick)
 {
 	TankDrive(_stick->GetY(), _stick->GetTwist());
@@ -112,7 +111,7 @@ void CANDrive::ArcadeDrive (Joystick *_stick)
 	ArcadeDrive(_stick->GetY(), _stick->GetZ());
 };
 
-void CANDrive::SpeedTest (void)
+void CANDrive::Test (void)
 {
 	m_canRightBack->ChangeControlMode(CANJaguar::kSpeed);
 //	m_canLeftBack->ChangeControlMode(CANJaguar::kSpeed);
@@ -134,16 +133,15 @@ void CANDrive::SpeedTest (void)
 	m_canRightBack->Set(1000);
 }
 
+void CANDrive::ChangeControlMode(CANJaguar::ControlMode controlMode)
+{//change if duplicate required, also change getcontrolmode
+	m_canLeftFront->ChangeControlMode(controlMode);
+	m_canRightFront->ChangeControlMode(controlMode);
+	m_canLeftBack->ChangeControlMode(controlMode);
+	m_canRightBack->ChangeControlMode(controlMode);
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
+CANJaguar::ControlMode CANDrive::GetControlMode()
+{
+	return m_canLeftFront->GetControlMode();
+}

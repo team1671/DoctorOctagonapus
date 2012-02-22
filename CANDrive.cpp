@@ -78,14 +78,6 @@ bool CANDrive::DistDrive(float _fLeftDist, float _fRightDist)
 	if(CANJaguar::kPosition != m_canLeftFront->GetControlMode())
 	{
 		ChangeControlMode(CANJaguar::kPosition);
-		m_canLeftFront->SetPositionReference(CANJaguar::kPosRef_QuadEncoder);
-		m_canRightFront->SetPositionReference(CANJaguar::kPosRef_QuadEncoder);
-		m_canLeftBack->SetPositionReference(CANJaguar::kPosRef_QuadEncoder);
-		m_canRightBack->SetPositionReference(CANJaguar::kPosRef_QuadEncoder);
-		m_canLeftFront->EnableControl();
-		m_canRightFront->EnableControl();
-		m_canLeftBack->EnableControl();
-		m_canRightBack->EnableControl();
 		m_canLeftFront->ConfigEncoderCodesPerRev(250);
 		m_canRightFront->ConfigEncoderCodesPerRev(250);
 		m_canLeftBack->ConfigEncoderCodesPerRev(250);
@@ -94,6 +86,14 @@ bool CANDrive::DistDrive(float _fLeftDist, float _fRightDist)
 		m_canRightFront->SetPID(1.0,0,0);
 		m_canLeftBack->SetPID(1.0,0,0);
 		m_canRightBack->SetPID(1.0,0,0);
+		m_canLeftFront->SetPositionReference(CANJaguar::kPosRef_QuadEncoder);
+		m_canRightFront->SetPositionReference(CANJaguar::kPosRef_QuadEncoder);
+		m_canLeftBack->SetPositionReference(CANJaguar::kPosRef_QuadEncoder);
+		m_canRightBack->SetPositionReference(CANJaguar::kPosRef_QuadEncoder);
+		m_canLeftFront->EnableControl();
+		m_canRightFront->EnableControl();
+		m_canLeftBack->EnableControl();
+		m_canRightBack->EnableControl();
 	}
 	float LRots=_fLeftDist*inchestorots;//DONT REMOVE ABBREVATIONS!
 	float RRots=_fRightDist*inchestorots;

@@ -5,9 +5,9 @@
 
 class Shooter
 {
-private:
-	CANJaguar	*m_canTopShooter,
-				*m_canBottomShooter;
+public:
+//	CANJaguar	*m_canTopShooter,
+//				*m_canBottomShooter;
 	
 	float		m_fTopShotValue,
 				m_fBotShotValue;
@@ -15,7 +15,10 @@ private:
 	bool		m_flagIncrement,
 				m_flagDecrement;
 	
-public:
+	
+	CANJaguar	*m_canTopShooter,
+				*m_canBottomShooter;
+	
 	Shooter(void);
 	//Shooter(const Shooter &);
 	Shooter(int _nTopShot, int _nBotShot, int _nEncoderCount);

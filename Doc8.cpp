@@ -68,10 +68,14 @@ public:
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line1,"Autonomous");
 			myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
 			
-			Wait(1.0);
+			Wait(.3);
 			
-			myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
-			myShooter->UpdateValues();
+			
+			myShooter->m_canTopShooter->Set(SHOOTER_TOP_SPEED_CONFIG_ONE);
+			myShooter->m_canBottomShooter->Set(SHOOTER_BOTTOM_SPEED_CONFIG_ONE);
+			//myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
+			//myShooter->UpdateValues();
+			
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line2,"fire");
 			driverOut->UpdateLCD();
 
@@ -92,18 +96,18 @@ public:
 //				}
 //			}
 			
-			Wait(.4);
+			Wait(2.0);
 			myLift->AutonomousLift(1);
 			Wait(4);
 			myLift->AutonomousLift(0);
 			myShooter->ChangeSpeed(SHOOTER_SPEED_OFF,SHOOTER_SPEED_OFF);
 			myShooter->UpdateValues();
-			
+			/*
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line3,"move to ramp");
 			driverOut->UpdateLCD();
 	
 			myCD->ArcadeDrive(-.7,0);
-			Wait(1.8);
+			Wait(1.95);
 			myCD->ArcadeDrive(0,0);
 			//myCD->DistDrive(toRamp,toRamp);
 			
@@ -124,7 +128,7 @@ public:
 			
 			//Michael's
 			//myCD->Test();
-			
+			*/
 			driverOut->Clear();
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line4,"End of Autonomous: Beginning Kinect");
 			driverOut->UpdateLCD();

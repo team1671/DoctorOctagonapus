@@ -27,7 +27,7 @@ public:
 	void TankDrive(float _fLeftSpeed, float _fRightSpeed);
 	void ArcadeDrive (float _fThrottleSpeed, float _fTurnSpeed);
 	bool DistDrive(float _fLeftDist, float _fRightDist);
-	void ThetaDrive(float angle);
+	bool ThetaDrive(float angle);
 	//Usercontrol
 	void ArcadeDrive (Joystick *_stick);
 	void TankDrive(Joystick *_stick);

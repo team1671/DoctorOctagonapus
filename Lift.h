@@ -12,6 +12,8 @@ public:
 	Lift(void);
 	Lift(int canport);
 	void Control(Joystick *stick);
+	void AutonomousLift(bool firstExecution);
+	
 };
 
 #endif

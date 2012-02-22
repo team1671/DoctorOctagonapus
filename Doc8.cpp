@@ -1,4 +1,5 @@
 #include "Doc8.h"
+//#include "skelton.h"
 
 class Doc8_Official : public SimpleRobot
 {	
@@ -11,7 +12,10 @@ class Doc8_Official : public SimpleRobot
 	Joystick *pilot, *copilot;
 	KinectStick *leftArm, *rightArm;
 	
-	bool bArcade;
+//	Joint *leftElbow, *rightElbow;
+	
+	int configuration;
+	bool bArcade, hasCamera;
 	
 	RampDescend *myRamp;
 	
@@ -39,20 +43,105 @@ public:
 		pilot = new Joystick (JOYSTICK_PILOT_PORT);
 		copilot = new Joystick (JOYSTICK_COPILOT_PORT);
 		
-		leftArm = new KinectStick(1);
-		rightArm = new KinectStick(2);
+		
+		
+		leftArm = new KinectStick(KINECT_LEFT);
+		rightArm = new KinectStick(KINECT_RIGHT);
+		
+//		leftElbow = new Joint(ELBOW_RIGHT);
+//		rightElbow = new Joint(ELBOW_LEFT);
+		
 		
 		bArcade = false;
-		
+		configuration = 1;//set to pee-sock l8er
+		hasCamera = false;//set to switch l8er
 	}
 
 
 	void Autonomous(void)
 	{
 		GetWatchdog().Kill();
-		while(IsEnabled() && IsAutonomous())
+		while(IsEnabled() && IsAutonomous())//this is kinda ghetto but..
 		{
-			myCD->Test();
+	
+			driverOut->Clear();
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line1,"Autonomous");
+			myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
+			
+			Wait(1.0);
+			
+			myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
+			myShooter->UpdateValues();
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line2,"fire");
+			driverOut->UpdateLCD();
+
+//			if (hasCamera)
+//			{
+//				driverOut->PrintfLine(DriverStationLCD::kUser_Line4,"HAS CAMERA!!!!!!!!!!!!!!");
+//				driverOut->UpdateLCD();
+//			}
+//			else
+//			{
+//				if (configuration == 1)
+//				{
+//					myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_CONFIG_ONE,SHOOTER_BOTTOM_SPEED_CONFIG_ONE);
+//				}
+//				else if (configuration == 2)
+//				{
+//					myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_CONFIG_TWO,SHOOTER_BOTTOM_SPEED_CONFIG_TWO);
+//				}
+//			}
+			
+			Wait(.4);
+			myLift->AutonomousLift(1);
+			Wait(4);
+			myLift->AutonomousLift(0);
+			myShooter->ChangeSpeed(SHOOTER_SPEED_OFF,SHOOTER_SPEED_OFF);
+			myShooter->UpdateValues();
+			
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line3,"move to ramp");
+			driverOut->UpdateLCD();
+	
+			myCD->ArcadeDrive(-.7,0);
+			Wait(1.8);
+			myCD->ArcadeDrive(0,0);
+			//myCD->DistDrive(toRamp,toRamp);
+			
+			Wait(.1);
+			
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line4,"descend");
+			driverOut->UpdateLCD();
+			myRamp->AutonomousArm(-1);
+			Wait(.5);
+			
+			
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line5,"reset");
+			driverOut->UpdateLCD();
+			myRamp->AutonomousArm(1);
+			Wait(.4);
+			
+			myRamp->AutonomousArm(0);
+			
+			//Michael's
+			//myCD->Test();
+			
+			driverOut->Clear();
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line4,"End of Autonomous: Beginning Kinect");
+			driverOut->UpdateLCD();
+			
+			
+			Kinect:
+				myCD->TankDrive(leftArm->GetY(),rightArm->GetY());
+				
+				//if (GetElbowRight() && GetElbowLeft())
+				//	myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
+				//kinect support
+			if (IsAutonomous() && IsEnabled())
+				goto Kinect;
+			
+			driverOut->Clear();
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line4,"End of Hybrid");
+			driverOut->UpdateLCD();
 		}
 	}
 
@@ -62,25 +151,32 @@ public:
 		while(IsEnabled() && IsOperatorControl())
 		{			
 			//SHOOTING SPEEDS BY BUTTON SELECTION
-			if(copilot->GetRawButton(1))
+			if (!hasCamera or copilot->GetRawButton(9))//!
 			{
-				myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
+				if(copilot->GetRawButton(1))
+				{
+					myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
+				}
+				else if(copilot->GetRawButton(2))
+				{
+					myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_HIGH,SHOOTER_BOTTOM_SPEED_HIGH);
+				}
+				else if(copilot->GetRawButton(3))
+				{
+					myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_LOW,SHOOTER_BOTTOM_SPEED_LOW);
+				}
+				else if (copilot->GetRawButton(8))
+				{
+					myShooter->ChangeSpeed(SHOOTER_SPEED_OFF,SHOOTER_BOTTOM_SPEED_IDLE);
+				}
+				else if(copilot->GetRawButton(4))
+				{
+					myShooter->ChangeSpeed(SHOOTER_SPEED_OFF,SHOOTER_SPEED_OFF);
+				}
 			}
-			else if(copilot->GetRawButton(2))
+			else
 			{
-				myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_HIGH,SHOOTER_BOTTOM_SPEED_HIGH);
-			}
-			else if(copilot->GetRawButton(3))
-			{
-				myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_LOW,SHOOTER_BOTTOM_SPEED_LOW);
-			}
-			else if (copilot->GetRawButton(8))
-			{
-				myShooter->ChangeSpeed(SHOOTER_SPEED_OFF,SHOOTER_BOTTOM_SPEED_IDLE);
-			}
-			else if(copilot->GetRawButton(4))
-			{
-				myShooter->ChangeSpeed(SHOOTER_SPEED_OFF,SHOOTER_SPEED_OFF);
+				
 			}
 			
 			//SWITCHING TO AND FROM TANK AND ARCADE
@@ -111,8 +207,6 @@ public:
 			{
 				myCD -> SetReversed(false);
 			}
-			
-			
 			
 			myLift->Control(copilot);
 			myShooter->Control(copilot);

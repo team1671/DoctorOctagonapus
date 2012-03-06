@@ -1,3 +1,9 @@
+
+
+
+//cams need deally
+
+
 #include "Doc8.h"
 //#include "skelton.h"
 

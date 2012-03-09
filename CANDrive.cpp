@@ -131,7 +131,7 @@ void CANDrive::ArcadeDrive(float _fThrottleSpeed, float _fTurnSpeed)
 	float _fLeftSpeed, _fRightSpeed;
 	_fLeftSpeed = _fThrottleSpeed + _fTurnSpeed;
 	_fRightSpeed = _fThrottleSpeed - _fTurnSpeed;
-	
+
 	TankDrive(_fLeftSpeed, _fRightSpeed);
 };
 
@@ -139,6 +139,18 @@ void CANDrive::ArcadeDrive (Joystick *_stick)
 {
 	ArcadeDrive(_stick->GetY(), _stick->GetZ());
 };
+
+//ArcadeDriveKinect
+void CANDrive::ArcadeDriveKinect(float _fThrottleSpeed)
+{
+	float _fLeftSpeed, _fRightSpeed;
+	_fLeftSpeed = _fThrottleSpeed;
+	_fRightSpeed = _fThrottleSpeed;
+
+	TankDrive(_fLeftSpeed, _fRightSpeed);
+};
+
+
 
 void CANDrive::Test (void)
 {

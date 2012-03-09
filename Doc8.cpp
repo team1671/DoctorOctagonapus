@@ -17,6 +17,8 @@ class Doc8_Official : public SimpleRobot
 	
 	Joystick *pilot, *copilot;
 	KinectStick *leftArm, *rightArm;
+	Skeleton *rightLeg, leftLeg;
+	
 	
 //	Joint *leftElbow, *rightElbow;
 	
@@ -141,8 +143,8 @@ public:
 			
 			
 			Kinect:
-				myCD->TankDrive(leftArm->GetY(),rightArm->GetY());
-				
+				myCD->ArcadeDriveKinect(leftArm->GetY());
+				myRamp->AutonomousArm(rightArm->GetY());
 				//if (GetElbowRight() && GetElbowLeft())
 				//	myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
 				//kinect support

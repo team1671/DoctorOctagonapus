@@ -29,6 +29,7 @@ public:
 	bool DistDrive(float _fLeftDist, float _fRightDist);
 	bool ThetaDrive(float angle);
 	//Usercontrol
+	void ArcadeDriveKinect (float left);
 	void ArcadeDrive (Joystick *_stick);
 	void TankDrive(Joystick *_stick);
 	void TankDrive(KinectStick *_leftarm, KinectStick *_rightarm);

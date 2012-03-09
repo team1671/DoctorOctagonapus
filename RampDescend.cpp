@@ -27,12 +27,13 @@ void RampDescend::Control(Joystick *stick)
 		}
 }
 
-void RampDescend::AutonomousArm(int objective)
+void RampDescend::AutonomousArm(float rightArm)
 {
-	if (objective == -1)
-		m_canRampDescend -> Set(0.55);
-	else if (objective == 1)
-		m_canRampDescend -> Set(-0.55);
-	else
-		m_canRampDescend -> Set(0);
+//	if (objective == -1)
+//		m_canRampDescend -> Set(0.55);
+//	else if (objective == 1)
+//		m_canRampDescend -> Set(-0.55);
+//	else
+//		m_canRampDescend -> Set(0);
+	m_canRampDescend -> Set(rightArm);
 }

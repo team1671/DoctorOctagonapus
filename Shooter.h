@@ -6,8 +6,6 @@
 class Shooter
 {
 public:
-//	CANJaguar	*m_canTopShooter,
-//				*m_canBottomShooter;
 	
 	float		m_fTopShotValue,
 				m_fBotShotValue;

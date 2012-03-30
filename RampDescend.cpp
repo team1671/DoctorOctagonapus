@@ -15,11 +15,11 @@ void RampDescend::Control(Joystick *stick)
 {
 		if (stick->GetRawButton(7))//LT
 		{
-			m_canRampDescend -> Set(-0.55);
+			m_canRampDescend -> Set(-0.65);
 		}
 		else if (stick->GetRawButton(8))//RT
 		{
-			m_canRampDescend -> Set(0.5);
+			m_canRampDescend -> Set(0.65);
 		}
 		else 
 		{
@@ -27,12 +27,13 @@ void RampDescend::Control(Joystick *stick)
 		}
 }
 
-void RampDescend::AutonomousArm(int objective)
+void RampDescend::AutonomousArm(float rightArm)//int objective
 {
-	if (objective == -1)
-		m_canRampDescend -> Set(0.55);
-	else if (objective == 1)
-		m_canRampDescend -> Set(-0.55);
-	else
-		m_canRampDescend -> Set(0);
+//	if (objective == -1)
+//		m_canRampDescend -> Set(0.55);
+//	else if (objective == 1)
+//		m_canRampDescend -> Set(-0.55);
+//	else
+//		m_canRampDescend -> Set(0);
+	m_canRampDescend -> Set(rightArm);
 }

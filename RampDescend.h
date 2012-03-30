@@ -12,7 +12,7 @@ public:
 	RampDescend(void);
 	RampDescend(int _nRampDescend_port);
 	void Control(Joystick *stick);
-	void AutonomousArm(int objective);
+	void AutonomousArm(float rightArm);
 };
 
 #endif

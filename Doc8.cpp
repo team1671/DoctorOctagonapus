@@ -1,23 +1,35 @@
+//note: when cRIO and camera boot up, camera takes longer time to come online than cRIO, therefore, before enabling, wait until light around the camera's
+//convex lense is green; then click 'clear errors' in the diagnostics tab of the DS.  There should be a camera error that will dissapear from the
+//'messages' box.  If you did not wait long enough, it will reappear.
+
+//note: some changes aside from the camera have been made; for removed code, see txt file; compare with older version~ I have one or it can be found in
+//GIT's history
+
+//note: exp spd for motors not found; single target distancing not opperational; multiple target distancing needs work, therefore, we will probably not use
+//this feature at Davis
+
 #include "Doc8.h"
-//#include "skelton.h"
 
 class Doc8_Official : public SimpleRobot
-{	
+{
 	CANDrive *myCD;
 	Lift *myLift;
 	Shooter *myShooter;
+	Camera *orientation;
 	
 	DriverStationLCD *driverOut;
 	
 	Joystick *pilot, *copilot;
 	KinectStick *leftArm, *rightArm;
 	
-//	Joint *leftElbow, *rightElbow;
-	
-	int configuration;
-	bool bArcade, hasCamera;
+	double autonTop, autonBottom;
+	int configuration, cycle;
+	bool bArcade, hasCamera, flag;
 	
 	RampDescend *myRamp;
+	
+	//HOI
+	Relay *red, *blue, *camLED;
 	
 public:
 	Doc8_Official(void)
@@ -43,18 +55,32 @@ public:
 		pilot = new Joystick (JOYSTICK_PILOT_PORT);
 		copilot = new Joystick (JOYSTICK_COPILOT_PORT);
 		
-		
+		//HOI
+		red = new Relay(REDSPIKE,Relay::kBothDirections);
+		red->Set(Relay::kOff);
+		blue = new Relay(BLUESPIKE,Relay::kBothDirections);
+		blue->Set(Relay::kOff);
+		camLED = new Relay(CAMSPIKE,Relay::kBothDirections);
+		camLED->Set(Relay::kOff);
+		camLED->Set(Relay::kForward);
 		
 		leftArm = new KinectStick(KINECT_LEFT);
 		rightArm = new KinectStick(KINECT_RIGHT);
 		
-//		leftElbow = new Joint(ELBOW_RIGHT);
-//		rightElbow = new Joint(ELBOW_LEFT);
+		cycle = 0;
 		
+		flag = false;
+		bArcade = false;//initial drive mode
 		
-		bArcade = false;
-		configuration = 1;//set to pee-sock l8er
-		hasCamera = false;//set to switch l8er
+//		hasCamera=(IO.GetDigital(?))?(false):(true)//Psoc is not WIRED
+/*		if(IO.GetDigital(?))
+			configuration = 1;
+		if(IO.GetDigital(?))
+			configuration = 2;
+		if(IO.GetDigital(?))
+			configuration = 3;*/
+		configuration = 55;//1norm, 2 range, 55 lasting, 56 move
+		hasCamera = false;
 	}
 
 
@@ -63,100 +89,130 @@ public:
 		GetWatchdog().Kill();
 		while(IsEnabled() && IsAutonomous())//this is kinda ghetto but..
 		{
-	
 			driverOut->Clear();
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line1,"Autonomous");
-			myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
-			
-			Wait(.3);
-			
-			
-			myShooter->m_canTopShooter->Set(SHOOTER_TOP_SPEED_CONFIG_ONE);
-			myShooter->m_canBottomShooter->Set(SHOOTER_BOTTOM_SPEED_CONFIG_ONE);
-			//myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
-			//myShooter->UpdateValues();
-			
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line2,"fire");
-			driverOut->UpdateLCD();
 
-//			if (hasCamera)
+//			if (hasCamera)//included!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //			{
+//				camLED->Set(Relay::kForward);
 //				driverOut->PrintfLine(DriverStationLCD::kUser_Line4,"HAS CAMERA!!!!!!!!!!!!!!");
 //				driverOut->UpdateLCD();
 //			}
 //			else
 //			{
-//				if (configuration == 1)
+//				if (configuration == 1 or configuration == 55 or configuration == 56 )
 //				{
 //					myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_CONFIG_ONE,SHOOTER_BOTTOM_SPEED_CONFIG_ONE);
+//					myShooter->UpdateValues();
 //				}
 //				else if (configuration == 2)
 //				{
 //					myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_CONFIG_TWO,SHOOTER_BOTTOM_SPEED_CONFIG_TWO);
+//					myShooter->UpdateValues();
 //				}
 //			}
+			while (myShooter->GetBottomSpeed() > -1000)
+			{
+				myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_CONFIG_ONE,SHOOTER_BOTTOM_SPEED_CONFIG_ONE);
+				myShooter->UpdateValues();
+			}
 			
-			Wait(2.0);
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line5,"TopShotInput: %f", myShooter->GetTopInput());
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line6,"BotShotInput: %f", myShooter->GetBottomInput());
+			
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line2,"fire");
+			driverOut->UpdateLCD();
+			
 			myLift->AutonomousLift(1);
+			
+			if (configuration == 55)
+			{
+				while (IsAutonomous()){}
+			}
+			else{}
+			
 			Wait(4);
 			myLift->AutonomousLift(0);
 			myShooter->ChangeSpeed(SHOOTER_SPEED_OFF,SHOOTER_SPEED_OFF);
 			myShooter->UpdateValues();
-			/*
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line3,"move to ramp");
-			driverOut->UpdateLCD();
-	
-			myCD->ArcadeDrive(-.7,0);
-			Wait(1.95);
+			
+			if (configuration == 56)
+			{
+			myCD->ArcadeDrive(-.5,0);
+			Wait(3.1);
 			myCD->ArcadeDrive(0,0);
-			//myCD->DistDrive(toRamp,toRamp);
-			
-			Wait(.1);
-			
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line4,"descend");
-			driverOut->UpdateLCD();
-			myRamp->AutonomousArm(-1);
-			Wait(.5);
-			
-			
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line5,"reset");
-			driverOut->UpdateLCD();
-			myRamp->AutonomousArm(1);
-			Wait(.4);
-			
-			myRamp->AutonomousArm(0);
-			
-			//Michael's
-			//myCD->Test();
-			*/
-			driverOut->Clear();
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line4,"End of Autonomous: Beginning Kinect");
-			driverOut->UpdateLCD();
-			
-			
-			Kinect:
-				myCD->TankDrive(leftArm->GetY(),rightArm->GetY());
-				
-				//if (GetElbowRight() && GetElbowLeft())
-				//	myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
-				//kinect support
-			if (IsAutonomous() && IsEnabled())
-				goto Kinect;
+			}
+			else{}
 			
 			driverOut->Clear();
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line4,"End of Hybrid");
+			driverOut->PrintfLine(DriverStationLCD::kUser_Line4,"End of Autonomous");
 			driverOut->UpdateLCD();
 		}
+		camLED->Set(Relay::kOff);
 	}
 
 	void OperatorControl(void)
 	{
 		GetWatchdog().Kill();
+		if (hasCamera)
+			camLED->Set(Relay::kForward);
 		while(IsEnabled() && IsOperatorControl())
-		{			
-			//SHOOTING SPEEDS BY BUTTON SELECTION
-			if (!hasCamera or copilot->GetRawButton(9))//!
+		{
+			if ((pilot->GetRawButton(9) or copilot->GetRawButton(9)) && !flag)
 			{
+				cycle++;
+				if (cycle == 1)
+				{
+					red->Set(Relay::kForward);
+					blue->Set(Relay::kOff);
+				}
+				else if (cycle == 2)
+				{
+					blue->Set(Relay::kForward);
+					red->Set(Relay::kOff);
+				}
+				else if (cycle == 3)
+				{
+					red->Set(Relay::kOff);
+					blue->Set(Relay::kOff);
+					cycle = 0;
+				}
+				flag =1;
+			}
+			else if (!pilot->GetRawButton(9) and !copilot->GetRawButton(9))
+				flag = 0;
+			
+			if (copilot->GetRawButton(11))
+				camLED->Set(Relay::kForward);
+			else if (copilot->GetRawButton(12))
+				camLED->Set(Relay::kOff);
+			
+			//SWITCHING TO AND FROM TANK AND ARCADE
+			if (pilot->GetRawButton(6))
+			{
+				bArcade = true;
+			}
+			else if (pilot->GetRawButton(5))
+			{
+				bArcade = false;
+			}
+			
+			if (bArcade)
+			{
+				myCD->ArcadeDrive(pilot);
+			}
+			else 
+			{	
+				myCD -> TankDrive(pilot);
+			}
+			
+			myShooter->Control(copilot);//leave thisaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaah
+			myShooter->UpdateValues();
+			
+//			SHOOTING SPEEDS BY BUTTON SELECTION
+			if (/*!hasCamera or*/ /*this is while not distance shooting*/!/**/copilot->GetRawButton(9))//change!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			{
+				myLift->Control(copilot);
 				if(copilot->GetRawButton(1))
 				{
 					myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
@@ -180,28 +236,29 @@ public:
 			}
 			else
 			{
-				
+//				orientation->RunAll();
+//				else if(copilot->GetRawButton(1))//shoot
+//				{
+//					orientation->velocity;set autonTop and autonBottom with this
+//					myShooter->ChangeSpeed(autonTop, autonBottom);//////////////////////////////////////////////////////////////////////////////////
+//					myShooter->UpdateValues();
+//					Wait(2.0);//can this be shortened?????????????????????????????????????????????????????????????????????????????????????
+//					myLift->AutonomousLift(1);
+//					Wait(4);
+//					myLift->AutonomousLift(0);
+//					myShooter->ChangeSpeed(SHOOTER_SPEED_OFF,SHOOTER_SPEED_OFF);
+//					myShooter->UpdateValues();
+//				}
 			}
-			
-			//SWITCHING TO AND FROM TANK AND ARCADE
-			if (pilot->GetRawButton(6))
+
+			if (hasCamera)
 			{
-				bArcade = true;
+				orientation->RunAll();
+				if(pilot->GetRawButton(3))//turn
+				{
+					myCD -> AutoTankDrive(orientation->centerX);
+				}
 			}
-			else if (pilot->GetRawButton(5))
-			{
-				bArcade = false;
-			}
-			
-			if (bArcade)
-			{
-				myCD->ArcadeDrive(pilot);
-			}
-			else 
-			{	
-				myCD -> TankDrive(pilot);
-			}
-			
 			//REVERSED TANK DRIVE AND ARCADE DRIVE (MUST HAVE SELECTION WITH G.R.B. 5 & 6
 			if (pilot->GetRawButton(1))
 			{
@@ -212,25 +269,25 @@ public:
 				myCD -> SetReversed(false);
 			}
 			
-			myLift->Control(copilot);
-			myShooter->Control(copilot);
-			myShooter->UpdateValues();
 			myRamp->Control(pilot);
-			
-			float lf, lb, rf, rb;
-			
-			myCD->GetValues(lf, lb, rf, rb);
 			
 			driverOut->Clear();
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line1,"TopShotRPM:%.4f", myShooter->GetTopSpeed());
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line2,"BotShotRPM:%.4f", myShooter->GetBottomSpeed());
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line3,"TopShotInput: %f", myShooter->GetTopInput());
 			driverOut->PrintfLine(DriverStationLCD::kUser_Line4,"BotShotInput: %f", myShooter->GetBottomInput());
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line5,"Front, %f, %f", lf, rf);
-			driverOut->PrintfLine(DriverStationLCD::kUser_Line6,"Back, %f, %f", lb, rb);
+			if (hasCamera)
+			{
+				driverOut->PrintfLine(DriverStationLCD::kUser_Line5,"NumberA'Targets: %f", orientation->numberOfTargets);
+				driverOut->PrintfLine(DriverStationLCD::kUser_Line6,"To Center: %f", orientation->centerX);
+			}
 			driverOut->UpdateLCD();
 			
 		}
+		camLED->Set(Relay::kOff);
+		red->Set(Relay::kOff);
+		blue->Set(Relay::kOff);
+		
 	}
 };
 

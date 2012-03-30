@@ -119,6 +119,12 @@ void CANDrive::TankDrive(Joystick *_stick)
 	TankDrive(-_stick->GetTwist(), -_stick->GetY());
 };
 
+void CANDrive::AutoTankDrive(float dir)
+{
+	if(abs(dir) < .1)// fix this later
+		TankDrive(dir*8, -dir*8);
+};
+
 void CANDrive::TankDrive (KinectStick *_leftarm, KinectStick *_rightarm)
 {
 	TankDrive (_leftarm->GetY(), _rightarm->GetY());
@@ -138,6 +144,16 @@ void CANDrive::ArcadeDrive(float _fThrottleSpeed, float _fTurnSpeed)
 void CANDrive::ArcadeDrive (Joystick *_stick)
 {
 	ArcadeDrive(_stick->GetY(), _stick->GetZ());
+};
+
+//ArcadeDriveKinect
+void CANDrive::ArcadeDriveKinect(float _fThrottleSpeed)
+{
+	float _fLeftSpeed, _fRightSpeed;
+	_fLeftSpeed = _fThrottleSpeed;
+	_fRightSpeed = _fThrottleSpeed;
+
+	TankDrive(_fLeftSpeed, _fRightSpeed);
 };
 
 void CANDrive::Test (void)

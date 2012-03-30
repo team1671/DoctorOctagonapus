@@ -1,0 +1,112 @@
+/*
+void SendVisionData(vector<ParticleAnalysisReport> &kitten) 
+{
+	Dashboard &d = DriverStation::GetInstance()->GetHighPriorityDashboardPacker();
+	int n = (numberOfTargets <= 10) ? numberOfTargets : 10;
+	d.AddCluster(); 
+	{
+		d.AddArray(); 
+		{
+		for (int i = 0; i < n; i++) //ParticleAnalysisReport *r = &(kitten->at(i));
+		{
+			ParticleAnalysisReport cat = (kitten.at(i));
+				d.AddCluster(); 
+				{
+					d.AddI16((INT16)cat.center_mass_y-10);
+					d.AddI16((INT16)cat.center_mass_x-10);
+					d.AddI16((INT16)cat.center_mass_y+10);
+					d.AddI16((INT16)cat.center_mass_x+10);
+				}
+				d.FinalizeCluster();
+			}
+		}
+		d.FinalizeArray();
+	}
+	d.FinalizeCluster();
+	d.Finalize();
+}
+*/
+
+
+//drive output silliness
+//			float lf, lb, rf, rb;
+//			
+//			myCD->GetValues(lf, lb, rf, rb);
+			//			driverOut->PrintfLine(DriverStationLCD::kUser_Line5,"Front, %f, %f", lf, rf);
+			//			driverOut->PrintfLine(DriverStationLCD::kUser_Line6,"Back, %f, %f", lb, rb);
+
+
+
+/*
+//autonomous excluded V
+driverOut->PrintfLine(DriverStationLCD::kUser_Line3,"move to ramp");
+driverOut->UpdateLCD();
+
+myCD->ArcadeDrive(-.7,0);
+Wait(1.95);
+myCD->ArcadeDrive(0,0);
+//myCD->DistDrive(toRamp,toRamp);
+
+Wait(.1);
+
+driverOut->PrintfLine(DriverStationLCD::kUser_Line4,"descend");
+driverOut->UpdateLCD();
+myRamp->AutonomousArm(-1);
+Wait(.5);
+
+
+driverOut->PrintfLine(DriverStationLCD::kUser_Line5,"reset");
+driverOut->UpdateLCD();
+myRamp->AutonomousArm(1);
+Wait(.4);
+
+myRamp->AutonomousArm(0);
+
+//Michael's
+//myCD->Test();
+*/
+
+
+/*old cam concept
+	
+	void Autonomous(void)
+	{
+		GetWatchdog().Kill();
+		while(IsEnabled() && IsAutonomous())
+		{
+		}
+	}
+
+	void Doc8::AutoTurn()// 0 is -1 to 1
+	{
+		RunAll();
+		
+	}
+
+	void Doc8::AutoShoot()
+	{
+		RunAll();
+		
+	}
+
+	void Doc8::LCDOutput()
+	{
+		RunAll();
+		
+	}
+*/
+
+
+//from doc 8 dec b/c aaron fails
+//	Skeleton *rightLeg, leftLeg;
+	//test
+//	Joint *leftElbow, *rightElbow;
+
+//same as above from constr
+//		leftElbow = new Joint(ELBOW_RIGHT);
+//		rightElbow = new Joint(ELBOW_LEFT);
+
+//from auton kinect goto
+//if (GetElbowRight() && GetElbowLeft())
+//	myShooter->ChangeSpeed(SHOOTER_TOP_SPEED_MED,SHOOTER_BOTTOM_SPEED_MED);
+//kinect support

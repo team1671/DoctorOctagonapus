@@ -6,7 +6,7 @@
 #include "Lift.h"
 #include "Shooter.h"
 #include "RampDescend.h"
-//#include "Windows.h"
+#include "Camera.h"
 
 #define ENCOUNT_SHOOTER 360
 #define ENCOUNT_DRIVE 250
@@ -19,9 +19,9 @@
 #define SHOOTER_BOTTOM_SPEED_LOW 			-1400.0
 #define SHOOTER_BOTTOM_SPEED_IDLE 			-1000.0  /*IDLE SPEED*/
 #define SHOOTER_TOP_SPEED_CONFIG_ONE 		255.0
-#define SHOOTER_BOTTOM_SPEED_CONFIG_ONE 	-2300.0
-//#define SHOOTER_TOP_SPEED_CONFIG_TWO 255.0
-//#define SHOOTER_BOTTOM_SPEED_CONFIG_TWO -2400.0
+#define SHOOTER_BOTTOM_SPEED_CONFIG_ONE 	-2400.0//from 23
+#define SHOOTER_TOP_SPEED_CONFIG_TWO 255.0
+#define SHOOTER_BOTTOM_SPEED_CONFIG_TWO -2400.0
 
 
 #define toRamp -90
@@ -49,8 +49,16 @@
 #define CAN_LIFT_TOWER 8
 #define CAN_RAMP_DESCENDER 9
 
+#define CAMSPIKE 1
+
 #define KP	0.250
 #define KI	0.015
 #define KD	0.020
+
+
+#define REDSPIKE 2
+#define BLUESPIKE 3
+
+#define IO (DriverStation::GetInstance()->GetEnhancedIO())
 
 #endif

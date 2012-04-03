@@ -6,7 +6,7 @@
 #include "Lift.h"
 #include "Shooter.h"
 #include "RampDescend.h"
-#include "Camera.h"
+//#include "Camera.h"
 
 #define ENCOUNT_SHOOTER 360
 #define ENCOUNT_DRIVE 250
